@@ -6,6 +6,7 @@ import type { ItineraryDay, ItineraryBlock, CommentThread, AwareUser, Comment } 
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '../hooks/useToast.ts';
+import { getAuthToken } from '../services/api.ts';
 
 const docMap = new Map<string, {
     doc: Y.Doc;
@@ -50,7 +51,8 @@ export const useSharedItinerary = (tripId: string, initialItinerary: ItineraryDa
         if (docMap.has(tripId)) return docMap.get(tripId)!;
 
         const doc = new Y.Doc();
-        const wsUrl = `ws://${window.location.host}`;
+        const token = getAuthToken();
+        const wsUrl = `ws://${window.location.host}?token=${encodeURIComponent(token || '')}&tripId=${encodeURIComponent(tripId)}`;
         const provider = new WebsocketProvider(wsUrl, tripId, doc);
         
         provider.awareness.setLocalStateField('user', {

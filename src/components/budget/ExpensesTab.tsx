@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import type { Trip, Expense } from '../../types.ts';
 import { useToast } from '../../hooks/useToast.ts';
 import BudgetOverview from './BudgetOverview.tsx';
+import BudgetInsights from './BudgetInsights.tsx';
 import ExpenseList from './ExpenseList.tsx';
 import AddExpenseDialog from './AddExpenseDialog.tsx';
 import { useExpenses } from '../../hooks/useExpenses.ts';
@@ -15,8 +16,9 @@ interface ExpensesTabProps {
 const ExpensesTab: React.FC<ExpensesTabProps> = ({ trip }) => {
     const { addToast } = useToast();
     const [isAddOpen, setAddOpen] = useState(false);
+    const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     
-    const { expenses = [], createExpense, deleteExpense } = useExpenses(trip.id);
+    const { expenses = [], createExpense, updateExpense, deleteExpense } = useExpenses(trip.id);
 
     const handleAddExpense = (expenseData: Omit<Expense, 'id' | 'tripId'>) => {
         createExpense.mutate({ ...expenseData, tripId: trip.id }, {
@@ -30,10 +32,17 @@ const ExpensesTab: React.FC<ExpensesTabProps> = ({ trip }) => {
         });
     };
     
-    // TODO: Add editing functionality
     const handleUpdateExpense = (updatedExpense: Expense) => {
-        // updateExpense.mutate(updatedExpense)
-        addToast('La edición de gastos estará disponible próximamente.', 'info');
+        updateExpense.mutate(updatedExpense, {
+            onSuccess: () => {
+                setEditingExpense(null);
+            }
+        });
+    };
+
+    const handleEditExpense = (expense: Expense) => {
+        setEditingExpense(expense);
+        setAddOpen(true); // Reuse the same dialog for editing
     };
 
     const handleDeleteExpense = (expenseId: string) => {
@@ -57,15 +66,26 @@ const ExpensesTab: React.FC<ExpensesTabProps> = ({ trip }) => {
         <div className="space-y-6">
             <AddExpenseDialog
                 isOpen={isAddOpen}
-                onClose={() => setAddOpen(false)}
+                onClose={() => {
+                    setAddOpen(false);
+                    setEditingExpense(null); // Clear editing state when closing
+                }}
                 onAddExpense={handleAddExpense}
-                isSubmitting={createExpense.isPending}
+                onUpdateExpense={handleUpdateExpense}
+                isSubmitting={createExpense.isPending || updateExpense.isPending}
+                initialData={editingExpense}
             />
             
             <BudgetOverview 
                 totalBudget={trip.budget * 100} // Convert dollars to cents
                 totalSpent={totalSpent} 
                 currency="USD"
+            />
+
+            <BudgetInsights
+                trip={trip}
+                expenses={expenses}
+                totalSpent={totalSpent}
             />
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -80,7 +100,7 @@ const ExpensesTab: React.FC<ExpensesTabProps> = ({ trip }) => {
                 </div>
                 <ExpenseList 
                     expenses={expenses}
-                    onUpdate={handleUpdateExpense}
+                    onUpdate={handleEditExpense}
                     onDelete={handleDeleteExpense}
                 />
             </div>

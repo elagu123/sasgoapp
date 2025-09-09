@@ -7,6 +7,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { QueryClient } from '@tanstack/query-core';
 import App from './App.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
+import { ThemeProvider } from './contexts/ThemeContext.tsx';
+import { ToastProvider } from './contexts/ToastContext.tsx';
+import { TripProvider } from './contexts/TripContext.tsx';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -21,9 +24,15 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <HashRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <TripProvider>
+                <App />
+              </TripProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </HashRouter>
     </QueryClientProvider>
   </React.StrictMode>

@@ -22,8 +22,7 @@ const canUserReadTrip = async (tripId: string, userId: string): Promise<boolean>
  */
 const formatReservation = (reservation: Reservation): any => ({
     ...reservation,
-    startDate: reservation.startDate.toISOString(),
-    endDate: reservation.endDate?.toISOString() ?? undefined,
+    date: reservation.date.toISOString(),
 });
 
 
@@ -36,7 +35,7 @@ export const findReservationsByTripId = async (tripId: string, userId: string): 
     }
     const reservations = await prisma.reservation.findMany({
         where: { tripId },
-        orderBy: { startDate: 'asc' },
+        orderBy: { date: 'asc' },
     });
     return reservations.map(formatReservation);
 };

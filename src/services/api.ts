@@ -10,9 +10,29 @@ import { v4 as uuidv4 } from 'uuid';
 const API_BASE_URL = '/api'; // Usamos un proxy de Vite, o sería 'http://localhost:3001/api'
 
 let inMemoryAccessToken: string | null = null;
+let csrfTokenInitialized = false;
 
 export const setAuthToken = (token: string | null) => {
     inMemoryAccessToken = token;
+};
+
+export const getAuthToken = (): string | null => {
+    return inMemoryAccessToken;
+};
+
+// Initialize CSRF token
+export const initializeCsrfToken = async (): Promise<void> => {
+    if (csrfTokenInitialized) return;
+    
+    try {
+        await fetch(`${API_BASE_URL}/auth/csrf-token`, {
+            method: 'GET',
+            credentials: 'include' // Important for cookies
+        });
+        csrfTokenInitialized = true;
+    } catch (error) {
+        console.error('Failed to initialize CSRF token:', error);
+    }
 };
 
 /**
@@ -40,6 +60,12 @@ class ApiError extends Error {
 }
 
 const apiClient = async (endpoint: string, options: RequestInit = {}) => {
+    // Initialize CSRF token for non-safe methods
+    const method = options.method?.toUpperCase();
+    if (method && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        await initializeCsrfToken();
+    }
+
     const token = inMemoryAccessToken;
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
@@ -52,7 +78,6 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
 
     // --- CSRF Protection ---
     // Para métodos que no son seguros, leemos la cookie csrf-token y la enviamos en la cabecera X-CSRF-Token.
-    const method = options.method?.toUpperCase();
     if (method && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
         const csrfToken = getCookie('csrf-token');
         if (csrfToken) {
@@ -65,6 +90,7 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers,
+        credentials: 'include', // Include cookies in requests
     });
     
     // Si la respuesta no tiene cuerpo (ej. 204 No Content), no intentes parsear JSON
@@ -194,6 +220,13 @@ export const createExpense = async (expenseData: Omit<Expense, 'id'>): Promise<E
     });
 };
 
+export const updateExpense = async (expenseId: string, expenseData: Partial<Expense>): Promise<Expense> => {
+    return apiClient(`/expenses/${expenseId}`, {
+        method: 'PUT',
+        body: JSON.stringify(expenseData),
+    });
+};
+
 export const deleteExpense = async (expenseId: string): Promise<void> => {
     return apiClient(`/expenses/${expenseId}`, {
         method: 'DELETE',
@@ -280,15 +313,7 @@ export const getItineraryPdf = async (itineraryId: string) => {
 // --- Collaboration API (Real Implementation) ---
 
 export const getTripMembers = async (tripId: string): Promise<{ members: TripMember[], invites: Invite[] }> => {
-    // Esto debería llamar al endpoint del backend.
-    // Por ahora, simulamos la respuesta para no romper el modal de compartir.
-    console.warn(`[MOCK] GET /api/trips/${tripId}/members`);
-    await new Promise(res => setTimeout(res, 300));
-    const trip = await getTrip(tripId);
-    return {
-        members: trip.members,
-        invites: [] // El backend aún no modela `invites` de esta forma
-    };
+    return apiClient(`/trips/${tripId}/members`);
 };
 
 export const inviteUser = async (tripId: string, email: string, role: Role): Promise<Trip> => {
@@ -299,8 +324,48 @@ export const inviteUser = async (tripId: string, email: string, role: Role): Pro
 };
 
 export const updateMemberRole = async (tripId: string, memberId: string, role: Role): Promise<{ ok: true }> => {
-    // El backend actual no tiene un endpoint para esto. Simulado por ahora.
-    console.warn(`[MOCK] PATCH /api/trips/${tripId}/role`, { memberId, role });
-    await new Promise(res => setTimeout(res, 400));
-    return { ok: true };
+    return apiClient(`/trips/${tripId}/members/${memberId}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role })
+    });
+};
+
+export const removeMember = async (tripId: string, memberId: string): Promise<{ ok: true }> => {
+    return apiClient(`/trips/${tripId}/members/${memberId}`, {
+        method: 'DELETE'
+    });
+};
+
+export const cancelInvitation = async (invitationId: string): Promise<{ ok: true }> => {
+    return apiClient(`/trips/invitations/${invitationId}`, {
+        method: 'DELETE'
+    });
+};
+
+export const uploadTripImage = async (tripId: string, imageFile: File): Promise<{ message: string; imageUrl: string; trip: Trip }> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}/image`, {
+        method: 'POST',
+        headers: {
+            ...(inMemoryAccessToken && { Authorization: `Bearer ${inMemoryAccessToken}` }),
+            'X-CSRF-Token': getCookie('csrfToken') || '',
+        },
+        credentials: 'include',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error uploading image' }));
+        throw new ApiError(`${response.status}`, errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+};
+
+export const deleteTripImage = async (tripId: string): Promise<{ message: string; trip: Trip }> => {
+    return apiClient(`/trips/${tripId}/image`, {
+        method: 'DELETE'
+    });
 };

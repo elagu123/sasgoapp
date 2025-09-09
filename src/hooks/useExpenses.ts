@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getExpenses, createExpense as apiCreateExpense, deleteExpense as apiDeleteExpense } from '../services/api';
+import { getExpenses, createExpense as apiCreateExpense, updateExpense as apiUpdateExpense, deleteExpense as apiDeleteExpense } from '../services/api';
 import type { Expense } from '../types';
 import { useToast } from './useToast';
 import { v4 as uuidv4 } from 'uuid';
@@ -61,8 +61,33 @@ export const useExpenses = (tripId: string) => {
             queryClient.invalidateQueries({ queryKey });
         },
     });
-    
-    // updateExpense mutation can be added here following the same pattern
 
-    return { expenses, isLoading, error, createExpense, deleteExpense };
+    const updateExpense = useMutation<Expense, Error, Expense, { previousExpenses: Expense[] }>({
+        mutationFn: (expense) => apiUpdateExpense(expense.id, expense),
+        onMutate: async (updatedExpense) => {
+            await queryClient.cancelQueries({ queryKey });
+            const previousExpenses = queryClient.getQueryData<Expense[]>(queryKey) || [];
+
+            queryClient.setQueryData<Expense[]>(
+                queryKey,
+                old => old?.map(e => e.id === updatedExpense.id ? updatedExpense : e) ?? []
+            );
+            
+            return { previousExpenses };
+        },
+        onSuccess: () => {
+            addToast('Gasto actualizado con éxito', 'success');
+        },
+        onError: (_err, _expense, context) => {
+            addToast('Error al actualizar el gasto', 'error');
+            if (context?.previousExpenses) {
+                queryClient.setQueryData(queryKey, context.previousExpenses);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey });
+        },
+    });
+
+    return { expenses, isLoading, error, createExpense, updateExpense, deleteExpense };
 };

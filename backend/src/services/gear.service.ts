@@ -3,9 +3,11 @@ import type { Gear } from '@prisma/client';
 
 const gearWithIncludes = {
     include: {
-        tickets: {
-            orderBy: {
-                createdAt: 'desc'
+        owner: {
+            select: {
+                id: true,
+                name: true,
+                email: true
             }
         }
     }

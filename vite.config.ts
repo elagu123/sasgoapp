@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     // Only expose specific environment variables that are safe for the frontend
+    'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
     'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
   },

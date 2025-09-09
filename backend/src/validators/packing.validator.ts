@@ -17,7 +17,7 @@ export const createPackingListSchema = z.object({
 
 export const patchPackingListSchema = z.object({
   body: z.object({
-    op: z.enum(['add_item', 'update_item', 'remove_item', 'reorder_items']),
+    op: z.enum(['add', 'replace', 'remove', 'move']),
     payload: z.any(),
   }),
 });

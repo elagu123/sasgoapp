@@ -7,7 +7,8 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToast } from '../hooks/useToast.ts';
 import { useTripContext } from '../contexts/TripContext.tsx';
 import ShareModal from '../components/ShareModal.tsx';
-import { getItineraryPdf, createPackingList } from '../services/api.ts';
+import { getItineraryPdf, createPackingList, getPackingList } from '../services/api.ts';
+import { PDFService } from '../services/pdfService.ts';
 import { trackEvent } from '../lib/telemetry.js';
 import { sanitize } from '../lib/sanitize.ts';
 import type { ItineraryDay, Trip, ItineraryBlock, PackingListItem, PackingCategory, WeatherForecastDay, CommentThread } from '../types.ts';
@@ -134,6 +135,37 @@ const TripOverviewPage: React.FC = () => {
         });
     };
 
+    const handleExportItineraryPdf = async () => {
+        addToast('Generando PDF del itinerario...', 'info');
+        try {
+            await PDFService.generateItineraryPDF(trip);
+            addToast('PDF del itinerario generado exitosamente', 'success');
+        } catch (error) {
+            console.error('Error exporting itinerary PDF:', error);
+            addToast('Error al generar el PDF del itinerario', 'error');
+        }
+    };
+
+    const handleExportTripSummaryPdf = async () => {
+        addToast('Generando PDF completo del viaje...', 'info');
+        try {
+            let packingList = null;
+            if (trip.packingListId) {
+                try {
+                    packingList = await getPackingList(trip.packingListId);
+                } catch (error) {
+                    console.warn('Could not load packing list for PDF:', error);
+                }
+            }
+            
+            await PDFService.generateTripSummaryPDF(trip, packingList);
+            addToast('PDF completo del viaje generado exitosamente', 'success');
+        } catch (error) {
+            console.error('Error exporting trip summary PDF:', error);
+            addToast('Error al generar el PDF del viaje', 'error');
+        }
+    };
+
     if (isLoading) return <div>Cargando viaje...</div>;
     if (!trip) return <div>Viaje no encontrado.</div>;
 
@@ -172,8 +204,29 @@ const TripOverviewPage: React.FC = () => {
                             <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">{sanitize(trip.title)}</h1>
                             <p className="text-xl text-gray-500 dark:text-gray-400">{sanitize(trip.destination.join(', '))}</p>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-3">
                             <CollaboratorAvatars members={trip.members} awareUsers={awareUsers} />
+                            <div className="relative group">
+                                <button className="bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-300 font-semibold py-2 px-4 rounded-lg hover:bg-green-200 dark:hover:bg-green-900 transition-colors">
+                                    📄 Exportar
+                                </button>
+                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                    <div className="py-2">
+                                        <button 
+                                            onClick={handleExportItineraryPdf}
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            📅 PDF del Itinerario
+                                        </button>
+                                        <button 
+                                            onClick={handleExportTripSummaryPdf}
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            📋 PDF Completo del Viaje
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button onClick={() => setShareModalOpen(true)} className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
                                 Compartir
                             </button>

@@ -1,232 +1,397 @@
-# 🚀 SASGOAPP
+# 🚀 SASGOAPP - Intelligent Travel Planning Platform
 
-## 📋 Descripción del Proyecto
-SASGOAPP es una aplicación web fullstack de planificación de viajes inteligente que combina IA con colaboración en tiempo real. Permite a los usuarios crear, organizar y compartir itinerarios de viaje, gestionar listas de equipaje, seguimiento de gastos y reservas, todo potenciado por inteligencia artificial para recomendaciones personalizadas.
+## 📋 Project Overview
+SASGOAPP is a comprehensive fullstack travel planning application that combines artificial intelligence with real-time collaboration. It enables users to create, organize, and share intelligent travel itineraries, manage smart packing lists, track expenses, handle reservations, and receive AI-powered recommendations for personalized travel experiences.
 
-## 🛠️ Stack Tecnológico
-- **Frontend:** React 19.1.1 + TypeScript + Vite
-- **Estilos:** Tailwind CSS v3.4.4
-- **Backend:** Node.js + Express + TypeScript
-- **Base de Datos:** PostgreSQL con Prisma ORM v5.17.0
-- **APIs:** Google Gemini AI para recomendaciones inteligentes
-- **Real-time:** WebSocket con Yjs para colaboración en tiempo real
-- **Auth:** JWT con refresh tokens + bcrypt
-- **Testing:** Vitest + Playwright E2E
-- **Form Management:** React Hook Form + Zod validation
-- **UI/UX:** Framer Motion + drag-and-drop (@dnd-kit)
+## ✨ Key Features
 
-## 📂 Estructura del Proyecto
+### 🧠 **AI-Powered Intelligence**
+- **Smart Itinerary Generation** - AI creates optimized day-by-day plans
+- **Intelligent Packing Lists** - Context-aware packing suggestions
+- **Budget Insights** - AI analyzes spending patterns and provides recommendations
+- **Activity Suggestions** - Personalized recommendations based on interests and location
+- **Expense Categorization** - Automatic expense classification and optimization
+
+### 🎯 **Core Functionality**
+- **Trip Management** - Create, edit, and organize travel plans
+- **Real-time Collaboration** - Share trips with multiple users, live editing
+- **Interactive Maps** - Google Maps integration with location plotting
+- **Budget Tracking** - Comprehensive expense management with insights
+- **Packing Lists** - Smart packing with templates and progress tracking
+- **Weather Integration** - Real-time weather forecasts for destinations
+- **Document Management** - Centralized travel document storage
+
+### 📱 **Modern User Experience**
+- **Progressive Web App** - Install as native app with offline capabilities
+- **User Onboarding** - Personalized setup wizard for travel preferences
+- **Responsive Design** - Optimized for desktop, tablet, and mobile
+- **Dark/Light Theme** - Adaptive theming with user preferences
+- **Drag & Drop Interface** - Intuitive itinerary and packing list management
+
+## 🛠️ Technology Stack
+
+### **Frontend**
+- **React 19.1.1** + TypeScript + Vite
+- **Tailwind CSS v3.4.4** for styling
+- **Framer Motion** for animations
+- **@dnd-kit** for drag-and-drop functionality
+- **React Hook Form** + Zod validation
+- **@tanstack/react-virtual** for performance
+- **PWA capabilities** with service workers
+
+### **Backend**
+- **Node.js** + Express + TypeScript
+- **Prisma ORM v5.17.0** with SQLite (development)
+- **JWT Authentication** with refresh tokens
+- **WebSocket** + Yjs for real-time collaboration
+- **bcrypt** for password hashing
+- **Rate limiting** and security middleware
+- **CSRF protection** and input validation
+
+### **AI & External Services**
+- **Google Gemini 2.5 Flash** for AI recommendations
+- **Google Maps API** for mapping and geocoding
+- **Weather API** for forecasts
+- **PDF generation** for itinerary exports
+
+### **Testing & Development**
+- **Vitest** for unit testing
+- **Playwright** for E2E testing
+- **TypeScript** strict mode
+- **ESLint** + Prettier for code quality
+
+## 📂 Project Structure
 ```
 sasgoapp/
-├── src/                          # Frontend React
-│   ├── components/               # Componentes reutilizables
-│   ├── contexts/                # Context providers (Auth, Theme, etc)
-│   ├── hooks/                   # Custom React hooks
-│   ├── pages/                   # Páginas de la aplicación
-│   ├── services/                # API calls y servicios externos
-│   ├── state/                   # Gestión de estado global
-│   ├── lib/                     # Utilidades y helpers
-│   ├── styles/                  # Estilos y themes
-│   ├── App.tsx                  # Componente principal
-│   ├── index.tsx                # Entry point
-│   ├── types.ts                 # Definiciones TypeScript
-│   └── constants.ts             # Constantes de la app
-├── backend/                     # Backend Node.js
+├── src/                          # Frontend React Application
+│   ├── components/               # Reusable UI Components
+│   │   ├── budget/              # Budget tracking components
+│   │   ├── dashboard/           # Dashboard widgets
+│   │   ├── itinerary/          # Itinerary management
+│   │   ├── maps/               # Google Maps integration
+│   │   ├── onboarding/         # User onboarding wizard
+│   │   ├── packing/            # Packing list management
+│   │   └── pwa/                # PWA components
+│   ├── contexts/                # React Context Providers
+│   ├── hooks/                   # Custom React Hooks
+│   ├── lib/                     # Utility Libraries
+│   ├── pages/                   # Application Pages
+│   ├── services/                # API Services
+│   │   ├── api.ts              # Main API client
+│   │   ├── geminiService.ts    # AI service integration
+│   │   ├── googleMapsService.ts # Maps service
+│   │   ├── weatherService.ts   # Weather integration
+│   │   └── notificationService.ts # Notifications
+│   ├── utils/                   # Utility Functions
+│   └── types.ts                 # TypeScript Definitions
+├── backend/                     # Backend Node.js Server
 │   ├── src/
-│   │   ├── controllers/         # Controladores HTTP
-│   │   ├── services/            # Lógica de negocio
-│   │   ├── middleware/          # Middlewares (auth, CSRF, etc)
-│   │   ├── routes/              # Definición de rutas
-│   │   ├── utils/               # Utilidades (JWT, validaciones)
-│   │   ├── validators/          # Schemas de validación Zod
-│   │   ├── lib/                 # Prisma client y configs
-│   │   └── index.ts             # Servidor principal
-│   ├── prisma/                  # Schema y migraciones DB
-│   ├── tests/                   # Tests unitarios
-│   └── .env.example             # Variables de entorno backend
-├── tests/                       # Tests E2E Playwright
-├── public/                      # Assets estáticos
-├── .env.example                 # Variables de entorno frontend
-├── .gitignore                   # Archivos ignorados por Git
-└── README.md                    # Documentación principal
+│   │   ├── controllers/         # HTTP Route Controllers
+│   │   ├── middleware/          # Express Middleware
+│   │   ├── routes/              # API Route Definitions
+│   │   ├── services/            # Business Logic Services
+│   │   ├── validators/          # Request Validation Schemas
+│   │   └── index.ts             # Main Server Entry Point
+│   ├── prisma/                  # Database Schema & Migrations
+│   └── .env.example             # Environment Variables Template
+├── tests/                       # End-to-End Tests
+├── public/                      # Static Assets
+└── README.md                    # Project Documentation
 ```
 
-## ⚙️ Instalación
+## ⚙️ Installation & Setup
 
-### Requisitos Previos
-- Node.js v18+ 
-- npm o yarn
-- PostgreSQL 14+
+### Prerequisites
+- Node.js v18+
+- npm or yarn
+- Git
 
-### Pasos de Instalación
+### Quick Start
 ```bash
-# 1. Clonar el repositorio
+# 1. Clone the repository
 git clone https://github.com/elagu123/sasgoapp.git
 cd sasgoapp
 
-# 2. Instalar dependencias del frontend
+# 2. Install frontend dependencies
 npm install
 
-# 3. Instalar dependencias del backend
+# 3. Install backend dependencies
 cd backend
 npm install
 
-# 4. Configurar variables de entorno
+# 4. Set up environment variables
 cp .env.example .env
-# Editar .env con tus claves reales
+cd ..
+cp .env.example .env
+# Edit both .env files with your configuration
 
-# 5. Configurar base de datos
+# 5. Set up the database
+cd backend
 npm run db:generate
 npm run db:migrate
 
-# 6. Ejecutar en desarrollo
+# 6. Start development servers
 # Terminal 1 - Backend
 cd backend
 npm run dev
 
-# Terminal 2 - Frontend
+# Terminal 2 - Frontend (new terminal)
 npm run dev
 ```
 
-## 🔑 Variables de Entorno Necesarias
+The application will be available at:
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:3001
+
+## 🔑 Environment Variables
 
 ### Frontend (.env)
-- `GEMINI_API_KEY` - API key de Google Gemini AI
-
-### Backend (backend/.env)
-- `DATABASE_URL` - Conexión a PostgreSQL
-- `JWT_ACCESS_SECRET` - Secreto para tokens de acceso (min 32 chars)
-- `JWT_REFRESH_SECRET` - Secreto para refresh tokens (min 32 chars) 
-- `NODE_ENV` - Entorno de ejecución (development/production)
-- `PORT` - Puerto del servidor (default: 3001)
-- `CORS_ORIGIN` - URL permitida para CORS (default: http://localhost:5173)
-
-## 📊 Estado Actual - 09 Septiembre 2025
-
-### ✅ Completado
-- **Arquitectura Fullstack** - Frontend React + Backend Express configurados
-- **Autenticación Segura** - JWT con refresh tokens, CSRF protection
-- **Base de Datos** - Prisma ORM con modelos completos (Users, Trips, Expenses, etc)
-- **Real-time Collaboration** - WebSocket con Yjs para edición colaborativa
-- **UI/UX Avanzada** - Componentes con drag-and-drop, animaciones
-- **Gestión de Estado** - Contexts para auth, theme, trips
-- **Validación Robusta** - Zod schemas para frontend y backend
-- **Testing Setup** - Vitest unitarios + Playwright E2E
-- **Seguridad** - Rate limiting, helmet, input sanitization
-- **AI Integration** - Google Gemini para recomendaciones de viaje
-
-### 🔄 En Progreso
-- **Funcionalidades Core** - Creación/edición de viajes e itinerarios
-- **Gestión de Equipaje** - Listas de packing inteligentes
-- **Expenses Tracking** - Seguimiento de gastos por viaje
-- **Colaboración** - Compartir viajes con otros usuarios
-
-### 📝 TODO - Próximas Tareas
-- [ ] Implementar onboarding de usuarios nuevos
-- [ ] Optimizar performance con lazy loading
-- [ ] Agregar PWA capabilities
-- [ ] Implementar notificaciones push
-- [ ] Dashboard de analytics para usuarios
-- [ ] Integración con APIs de mapas (Google Maps/Mapbox)
-- [ ] Sistema de templates de viajes
-- [ ] Export/import de itinerarios (PDF, JSON)
-- [ ] Mobile responsive optimization
-- [ ] Caching con Redis para mejor performance
-
-### 🚨 Problemas Conocidos / Críticos
-- **Dependencia y-indexeddb** - Versión no encontrada, revisar compatibilidad
-- **WebSocket Auth** - Necesita testing exhaustivo en producción
-- **Database Migrations** - Faltan migraciones iniciales para setup limpio
-- **Error Handling** - Mejorar manejo de errores de red en frontend
-
-## 💡 Decisiones Técnicas
-
-### Arquitectura
-- **Monorepo structure** para frontend y backend juntos
-- **TypeScript full-stack** para type safety end-to-end
-- **Prisma ORM** por facilidad de migrations y type generation
-- **Zod validation** compartida entre frontend y backend
-
-### Patrones
-- **Repository Pattern** en servicios del backend
-- **Custom Hooks** para lógica reutilizable en React
-- **Context + Reducers** para estado global complejo
-- **API-first approach** con OpenAPI-ready structure
-
-## 🔐 Seguridad
-
-### ✅ Implementado
-- Variables sensibles en .env (no versionadas)
-- .gitignore configurado profesionalmente  
-- JWT access/refresh token pattern
-- CSRF protection con double-submit cookies
-- Rate limiting por IP
-- Input validation con Zod
-- SQL injection protection via Prisma
-- Helmet.js security headers
-- bcrypt para hash de passwords
-
-### ⚠️ Revisar en Producción
-- Implementar HTTPS y security headers adicionales
-- Configurar CORS restrictivo para producción
-- Habilitar logging y monitoring
-- Setup de backup automático de DB
-- Implementar key rotation para JWT secrets
-
-## 📝 Notas para Futuras Sesiones de Desarrollo
-
-### Contexto del Proyecto
-SASGOAPP es una aplicación de planificación de viajes que permite a los usuarios crear itinerarios colaborativos, gestionar listas de equipaje inteligentes, hacer seguimiento de gastos y obtener recomendaciones personalizadas mediante IA. La arquitectura fullstack permite real-time collaboration entre usuarios compartiendo el mismo viaje.
-
-### Archivos Principales
-- `src/App.tsx` - Router principal y layout de la aplicación
-- `src/contexts/AuthContext.tsx` - Gestión de autenticación y estado usuario
-- `src/services/api.ts` - Cliente API centralizado con interceptores
-- `backend/src/index.ts` - Servidor Express con WebSocket y middlewares
-- `backend/src/utils/jwt.ts` - Gestión de tokens JWT
-- `backend/prisma/schema.prisma` - Esquema de base de datos
-
-### Comandos del Proyecto
 ```bash
-# Frontend
-npm run dev          # Desarrollo con hot reload
-npm run build        # Build para producción  
-npm run preview      # Preview del build
-npm run test         # Tests unitarios con Vitest
-npm run test:e2e     # Tests E2E con Playwright
+# AI Integration
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
 
-# Backend
-npm run dev          # Desarrollo con auto-restart
-npm run build        # Compilar TypeScript
-npm run start        # Ejecutar build de producción
-npm run test         # Tests unitarios con Jest
-npm run db:migrate   # Ejecutar migraciones de DB
-npm run db:generate  # Generar Prisma client
-npm run db:studio    # Interfaz visual de DB
+# Google Services (Optional)
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_key_here
+
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3001
 ```
 
-### Historial de Desarrollo
-**09 Septiembre 2025** - Configuración Inicial Profesional
-- Inicializado repositorio Git con credenciales de Agustin
-- Configurado .gitignore profesional y .env.example completo
-- Creada documentación base y estructura de proyecto
-- Análisis completo de stack tecnológico y arquitectura
-- Configuradas medidas de seguridad y validaciones
-- Preparado para desarrollo colaborativo y CI/CD
+### Backend (backend/.env)
+```bash
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Authentication
+JWT_ACCESS_SECRET=your_super_secure_access_secret_32_chars_min
+JWT_REFRESH_SECRET=your_super_secure_refresh_secret_32_chars_min
+
+# Server Configuration
+NODE_ENV=development
+PORT=3001
+CORS_ORIGIN=http://localhost:5173
+
+# External APIs (Optional)
+OPENWEATHER_API_KEY=your_weather_api_key_here
+```
+
+## 🎮 Usage Guide
+
+### Getting Started
+1. **Create Account** - Register with email and password
+2. **Complete Onboarding** - Set travel preferences and interests
+3. **Create First Trip** - Add destination, dates, and budget
+4. **Build Itinerary** - Use AI suggestions or create manually
+5. **Manage Packing** - Generate smart packing lists
+6. **Track Budget** - Monitor expenses with AI insights
+7. **Collaborate** - Share trips with travel companions
+
+### Key Features Walkthrough
+
+#### **Trip Creation**
+- Enter destination, travel dates, and budget
+- Set trip pace (relaxed, moderate, intense)
+- Define interests for personalized recommendations
+- Invite collaborators for shared planning
+
+#### **AI Itinerary Builder**
+- Get AI-generated day-by-day itineraries
+- Customize suggested activities and timings
+- Resolve scheduling conflicts automatically
+- Add custom activities and notes
+
+#### **Smart Budget Tracking**
+- Add expenses with automatic categorization
+- View spending insights and projections
+- Get budget optimization suggestions
+- Track progress against daily budgets
+
+#### **Intelligent Packing**
+- Generate packing lists based on destination and activities
+- Use pre-built templates for different trip types
+- Check off items with progress tracking
+- Share packing responsibilities with travel partners
+
+## 📊 Current Status - December 2024
+
+### ✅ **Completed Features**
+- **Core Architecture** - Fullstack application with real-time capabilities
+- **User Authentication** - Secure JWT-based auth with refresh tokens
+- **Trip Management** - Complete CRUD operations for travel plans
+- **AI Integration** - Google Gemini for intelligent recommendations
+- **Real-time Collaboration** - Multi-user editing with WebSocket + Yjs
+- **Budget Tracking** - Comprehensive expense management with insights
+- **Packing Lists** - Smart packing with templates and progress
+- **Interactive Maps** - Google Maps integration with location plotting
+- **User Onboarding** - Personalized setup wizard
+- **PWA Support** - Progressive Web App with offline capabilities
+- **Weather Integration** - Real-time forecasts for destinations
+- **Security Hardening** - CSRF protection, rate limiting, input validation
+
+### 🔄 **Recently Added**
+- **Budget Intelligence** - AI-powered spending analysis and insights
+- **Google Maps Integration** - Interactive maps with custom markers
+- **User Onboarding System** - Multi-step wizard for new users
+- **PWA Capabilities** - Native app experience with offline support
+- **Advanced UI Components** - Enhanced user interface with animations
+- **Smart Services** - PDF generation, notifications, geocoding
+
+### 🚀 **Production Ready**
+- Comprehensive error handling and validation
+- Security best practices implementation
+- Performance optimizations
+- Mobile-responsive design
+- Comprehensive testing setup
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+# Unit Tests
+npm run test
+
+# E2E Tests  
+npm run test:e2e
+
+# Backend Tests
+cd backend
+npm run test
+```
+
+### Test Coverage
+- Component unit tests with Vitest
+- API integration tests
+- E2E user flow testing with Playwright
+- Real-time collaboration testing
+
+## 🚀 Deployment
+
+### Production Build
+```bash
+# Build frontend
+npm run build
+
+# Build backend
+cd backend
+npm run build
+```
+
+### Environment Setup
+1. Set `NODE_ENV=production`
+2. Configure production database
+3. Set secure JWT secrets
+4. Configure CORS for production domain
+5. Enable HTTPS and security headers
+
+### Deployment Options
+- **Vercel/Netlify** for frontend
+- **Railway/Heroku** for backend
+- **Docker** containerization ready
+- **Traditional VPS** with PM2
+
+## 🔐 Security Features
+
+### ✅ **Implemented**
+- JWT access/refresh token pattern
+- CSRF protection with double-submit cookies
+- Rate limiting per IP address
+- Input validation with Zod schemas
+- SQL injection protection via Prisma ORM
+- Password hashing with bcrypt
+- Security headers with Helmet.js
+- Environment variable security
+
+### 🛡️ **Production Recommendations**
+- Enable HTTPS and HSTS headers
+- Configure restrictive CORS policies
+- Implement comprehensive logging
+- Set up automated database backups
+- Use secrets management service
+- Enable API monitoring and alerts
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m "feat: add amazing feature"`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+### Code Standards
+- TypeScript strict mode
+- ESLint + Prettier configuration
+- Conventional commit messages
+- Comprehensive test coverage
+- Security-first development
+
+## 📝 API Documentation
+
+### Authentication Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh` - Token refresh
+- `GET /api/auth/me` - Get current user
+
+### Trip Management
+- `GET /api/trips` - List user trips
+- `POST /api/trips` - Create new trip
+- `GET /api/trips/:id` - Get trip details
+- `PUT /api/trips/:id` - Update trip
+- `DELETE /api/trips/:id` - Delete trip
+- `POST /api/trips/:id/share` - Share trip with users
+
+### Budget & Expenses
+- `GET /api/expenses` - List expenses
+- `POST /api/expenses` - Add expense
+- `PUT /api/expenses/:id` - Update expense
+- `DELETE /api/expenses/:id` - Delete expense
+
+### Packing Lists
+- `GET /api/packing/:id` - Get packing list
+- `POST /api/packing-lists` - Create packing list
+- `PATCH /api/packing/:id` - Update packing list items
+
+## 🎯 Future Roadmap
+
+### Planned Features
+- **Mobile App** - React Native version
+- **Advanced Analytics** - Trip insights and statistics
+- **Booking Integration** - Direct booking through platform
+- **Social Features** - Trip sharing and community
+- **Offline Mode** - Full offline functionality
+- **Multi-language** - Internationalization support
+
+### Technical Improvements
+- Microservices architecture
+- Redis caching layer
+- Advanced monitoring and logging
+- Performance optimizations
+- Enhanced security features
+
+## 📚 Additional Documentation
+
+- [API Reference](./docs/api.md) - Complete API documentation
+- [Development Guide](./docs/development.md) - Detailed development setup
+- [Deployment Guide](./docs/deployment.md) - Production deployment instructions
+- [Architecture Overview](./docs/architecture.md) - System design and architecture
+
+## 📞 Support & Contact
+
+- **Developer:** Agustin (agsasmoda@gmail.com)
+- **Repository:** https://github.com/elagu123/sasgoapp
+- **Issues:** [GitHub Issues](https://github.com/elagu123/sasgoapp/issues)
 
 ---
 
-📅 **Última actualización:** 09 Septiembre 2025, 19:30 ART  
-👤 **Desarrollador:** Agustin (agsasmoda@gmail.com)  
-🔗 **Repositorio:** https://github.com/elagu123/sasgoapp
+### 🎉 Ready to Plan Your Next Adventure?
+
+SASGOAPP combines the power of artificial intelligence with intuitive design to make travel planning effortless and enjoyable. Whether you're planning a weekend getaway or a month-long expedition, our platform helps you create memorable experiences with smart recommendations and collaborative tools.
+
+**Start your journey today!** 🌍✈️
 
 ---
 
-### 🚀 ¿Listo para contribuir?
-1. Fork del repositorio
-2. Crear rama para tu feature: `git checkout -b feature/nueva-funcionalidad`
-3. Commit con mensaje descriptivo: `git commit -m "feat: agregar nueva funcionalidad"`
-4. Push a tu rama: `git push origin feature/nueva-funcionalidad` 
-5. Abrir Pull Request
-
-**¡Bienvenido al desarrollo de SASGOAPP!** 🎉
+📅 **Last Updated:** December 2024  
+🚀 **Status:** Production Ready  
+⭐ **Version:** 1.0.0

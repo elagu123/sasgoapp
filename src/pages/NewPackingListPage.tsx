@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { generatePackingListFromAI } from '../services/geminiService.ts';
 // FIX: Add PackingCategory to import to be used in type casting.
 import type { PackingList, PackingListItem, PackingCategory } from '../types.ts';
@@ -11,24 +11,40 @@ import { PACKING_LISTS_QUERY_KEY } from '../queryKeys.ts';
 
 const NewPackingListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Extract trip data from navigation state or use defaults
+  const tripData = location.state?.tripData;
+  const tripId = location.state?.tripId;
+  
   const [formData, setFormData] = useState({
-    title: '',
-    destination: '',
-    startDate: '',
-    endDate: '',
+    title: tripData?.title || '',
+    destination: tripData?.destination || '',
+    startDate: tripData?.startDate || '',
+    endDate: tripData?.endDate || '',
     bagType: 'carry-on',
     tripType: [] as string[],
     plannedActivities: '',
     expectedWeather: '',
     useAI: true,
   });
-  
-  // This page needs a tripId to associate the list with.
-  // In a real app, this would come from the URL or state. We'll use a placeholder.
-  // TODO: Select a trip to create the list for.
-  const tripId = 'trip1';
+
+  // Auto-populate trip type based on trip pace if available
+  useEffect(() => {
+    if (tripData?.pace) {
+      const paceToTripType = {
+        'relaxed': ['vacaciones', 'playa'],
+        'moderate': ['vacaciones', 'familiar'],
+        'intense': ['aventura', 'montaña']
+      };
+      setFormData(prev => ({
+        ...prev,
+        tripType: paceToTripType[tripData.pace as keyof typeof paceToTripType] || []
+      }));
+    }
+  }, [tripData?.pace]);
 
   const { mutate: createList, isPending: isLoading } = useMutation<PackingList, Error, { tripId: string, title: string, items: Omit<PackingListItem, 'id' | 'packed'>[] }>({
     mutationFn: (newList: { tripId: string, title: string, items: Omit<PackingListItem, 'id' | 'packed'>[] }) => createPackingList(newList),
@@ -71,6 +87,10 @@ const NewPackingListPage: React.FC = () => {
         tripType: formData.tripType,
         plannedActivities: formData.plannedActivities,
         expectedWeather: formData.expectedWeather,
+        // Enhanced trip data for better AI suggestions
+        travelers: tripData?.travelers,
+        pace: tripData?.pace,
+        budget: tripData?.budget,
     };
 
     let items: Omit<PackingListItem, 'id' | 'packed'>[] = [];
@@ -89,6 +109,11 @@ const NewPackingListPage: React.FC = () => {
       }
     }
     
+    if (!tripId) {
+      addToast('Error: No se pudo identificar el viaje para crear la lista.', 'error');
+      return;
+    }
+    
     createList({ tripId, title: formData.title, items });
   };
 
@@ -96,24 +121,36 @@ const NewPackingListPage: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
-      <h1 className="text-3xl font-bold mb-6 text-center">Crear Nueva Lista de Empaque</h1>
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold mb-2">🧳 Crear Lista de Empaque</h1>
+        {tripData && (
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              ✨ <strong>Lista inteligente</strong> - Pre-configurada usando datos de tu viaje
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              Destino: {tripData.destination} • {tripData.travelers} viajero{tripData.travelers !== 1 ? 's' : ''} • Ritmo: {tripData.pace}
+            </p>
+          </div>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Título de la Lista</label>
-          <input type="text" name="title" id="title" required className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
+          <input type="text" name="title" id="title" required value={formData.title} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
         </div>
         <div>
           <label htmlFor="destination" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Destino</label>
-          <input type="text" name="destination" id="destination" required className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
+          <input type="text" name="destination" id="destination" required value={formData.destination} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Inicio</label>
-            <input type="date" name="startDate" id="startDate" required className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
+            <input type="date" name="startDate" id="startDate" required value={formData.startDate} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
           </div>
           <div>
             <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Fin</label>
-            <input type="date" name="endDate" id="endDate" required className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
+            <input type="date" name="endDate" id="endDate" required value={formData.endDate} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" onChange={handleInputChange} />
           </div>
         </div>
         <div>

@@ -8,7 +8,8 @@ import PackingListDnD from '../components/packing/PackingListDnD.tsx';
 import AddItemDialog from '../components/packing/AddItemDialog.tsx';
 import ConflictDialog from '../components/ConflictDialog.tsx';
 import { savePdfToCache, getPdfFromCache } from '../services/packingPdfCache.ts';
-import { getPackingListPdf } from '../services/api.ts';
+import { getPackingListPdf, getTrip } from '../services/api.ts';
+import { PDFService } from '../services/pdfService.ts';
 import { usePackingList } from '../hooks/usePackingList.ts';
 import { useOnlineStatus } from '../hooks/useOnlineStatus.ts';
 
@@ -68,27 +69,58 @@ const PackingListPage: React.FC = () => {
     };
 
     const handleExportPdf = async () => {
-        addToast('Preparando PDF...', 'info');
-        if (!isOnline) {
-            const cachedPdf = await getPdfFromCache(packingId);
-            if (cachedPdf) {
-                const url = URL.createObjectURL(cachedPdf.blob);
-                window.open(url, '_blank');
-                addToast('Mostrando PDF desde caché.', 'success');
-                return;
-            }
-            addToast('El PDF no está disponible offline.', 'error');
+        if (!list) {
+            addToast('No se puede exportar: lista no cargada', 'error');
             return;
         }
 
-        const { blob, filename } = await getPackingListPdf(packingId);
-        await savePdfToCache(packingId, blob);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+        addToast('Generando PDF...', 'info');
+        
+        try {
+            // Try to get trip data for enhanced PDF
+            let tripData = null;
+            if (list.tripId) {
+                try {
+                    tripData = await getTrip(list.tripId);
+                } catch (error) {
+                    console.warn('Could not load trip data for PDF:', error);
+                }
+            }
+
+            // Use new PDF service or fallback to backend
+            if (tripData) {
+                await PDFService.generatePackingListPDF(list, tripData);
+                addToast('PDF generado exitosamente', 'success');
+            } else if (isOnline) {
+                // Fallback to backend PDF generation
+                const cachedPdf = await getPdfFromCache(packingId);
+                if (cachedPdf) {
+                    const url = URL.createObjectURL(cachedPdf.blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = cachedPdf.filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    addToast('PDF descargado desde caché', 'success');
+                    return;
+                }
+
+                const { blob, filename } = await getPackingListPdf(packingId);
+                await savePdfToCache(packingId, blob);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                addToast('PDF descargado exitosamente', 'success');
+            } else {
+                addToast('PDF no disponible offline sin datos de viaje', 'error');
+            }
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+            addToast('Error al generar el PDF', 'error');
+        }
     };
 
     const handleConflictResolve = (resolvedItem: PackingListItem) => {

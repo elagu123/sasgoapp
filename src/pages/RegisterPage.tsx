@@ -18,7 +18,7 @@ const RegisterPage: React.FC = () => {
         setIsSubmitting(true);
         try {
             await register(name, email, password);
-            addToast('¡Registro exitoso! Por favor, inicia sesión.', 'success');
+            addToast('¡Registro exitoso! Configuremos tu perfil de viajero.', 'success');
             navigate('/login');
         } catch (error: any) {
             addToast(error.message || 'No se pudo completar el registro.', 'error');

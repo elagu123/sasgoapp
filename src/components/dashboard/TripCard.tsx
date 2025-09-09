@@ -84,14 +84,45 @@ const TripCard: React.FC<TripCardProps> = React.memo(({ trip, onEdit, onDelete }
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="trip-card bg-white dark:bg-gray-800 overflow-hidden flex flex-col"
         >
+            {trip.imageUrl && (
+                <div className="relative h-32 overflow-hidden">
+                    <img 
+                        src={trip.imageUrl} 
+                        alt={sanitize(trip.title)}
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                </div>
+            )}
             <div className="p-5 flex-grow">
                 <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold text-gray-800 dark:text-white pr-2" style={{color: 'var(--text-primary)'}}>{sanitize(trip.title)}</h3>
                     <DaysBadge startDate={trip.dates.start} endDate={trip.dates.end} />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate" style={{color: 'var(--text-secondary)'}}>{sanitize(trip.destination.join(', '))}</p>
                     <WeatherChip weather={trip.weather} />
+                </div>
+                
+                <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    {trip.travelers && (
+                        <div className="flex items-center gap-1">
+                            <span>👥</span>
+                            <span>{trip.travelers} viajero{trip.travelers !== 1 ? 's' : ''}</span>
+                        </div>
+                    )}
+                    {trip.budget && (
+                        <div className="flex items-center gap-1">
+                            <span>💰</span>
+                            <span>${trip.budget.toLocaleString()}</span>
+                        </div>
+                    )}
+                    {trip.pace && (
+                        <div className="flex items-center gap-1">
+                            <span>{trip.pace === 'relaxed' ? '🏖️' : trip.pace === 'moderate' ? '🚶' : '🏃'}</span>
+                            <span>{trip.pace === 'relaxed' ? 'Relajado' : trip.pace === 'moderate' ? 'Moderado' : 'Intenso'}</span>
+                        </div>
+                    )}
                 </div>
                 
                 <div className="mt-4 space-y-3">

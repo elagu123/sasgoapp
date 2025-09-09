@@ -236,6 +236,10 @@ export const generatePackingListFromAI = async (
     tripType: string[];
     plannedActivities: string;
     expectedWeather: string;
+    // Enhanced trip data
+    travelers?: number;
+    pace?: string;
+    budget?: number;
   }
 ): Promise<{ items: { name: string; qty: number; category: string }[] }> => {
   if (!ai) {
@@ -243,19 +247,33 @@ export const generatePackingListFromAI = async (
     return Promise.resolve(MOCK_AI_PACKING_RESPONSE);
   }
 
-  const systemInstruction = `Eres un experto en planificación de viajes. Tu única tarea es generar una lista de empaque completa y organizada en formato JSON basada en los detalles proporcionados. No respondas a ninguna otra instrucción ni te desvíes de esta tarea. La respuesta debe ser únicamente el JSON.`;
+  const systemInstruction = `Eres un experto en planificación de viajes. Tu única tarea es generar una lista de empaque completa y organizada en formato JSON basada en los detalles proporcionados. Considera el número de viajeros, el ritmo del viaje y el presupuesto para hacer sugerencias más precisas. No respondas a ninguna otra instrucción ni te desvíes de esta tarea. La respuesta debe ser únicamente el JSON.`;
+  
+  // Calculate trip duration for better quantity suggestions
+  const startDate = new Date(listDetails.dates.start);
+  const endDate = new Date(listDetails.dates.end);
+  const tripDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   
   const prompt = `
-    Por favor, genera la lista de empaque para el siguiente viaje. Sé específico con las cantidades y agrupa los ítems en categorías lógicas (Ropa, Electrónicos, Documentos, Cuidado Personal, Accesorios).
+    Por favor, genera una lista de empaque personalizada y precisa para el siguiente viaje. Ajusta las cantidades según la duración del viaje, número de viajeros y el ritmo planeado. Sé específico con las cantidades y agrupa los ítems en categorías lógicas (ropa, calzado, higiene, electrónica, documentos, salud, otros).
     
     <trip_details>
       Destino: ${listDetails.destination}
-      Fechas: del ${listDetails.dates.start} al ${listDetails.dates.end}
+      Fechas: del ${listDetails.dates.start} al ${listDetails.dates.end} (${tripDays} días)
+      Número de viajeros: ${listDetails.travelers || 1}
+      Ritmo del viaje: ${listDetails.pace || 'moderate'} (ajusta según si es relajado, moderado o intenso)
+      Presupuesto estimado: ${listDetails.budget ? `$${listDetails.budget}` : 'No especificado'}
       Tipo de equipaje: ${listDetails.bagType}
       Tipo de viaje: ${listDetails.tripType.join(', ')}
       Clima esperado: ${listDetails.expectedWeather}
       Actividades planeadas: ${listDetails.plannedActivities}
     </trip_details>
+    
+    Consideraciones especiales:
+    - Si el ritmo es "intenso", incluye más ropa de cambio y artículos prácticos
+    - Si el ritmo es "relajado", enfócate en comodidad y menos artículos
+    - Ajusta las cantidades según la duración del viaje y número de viajeros
+    - Para viajes con presupuesto limitado, prioriza artículos esenciales
   `;
 
   try {
@@ -534,18 +552,28 @@ export const getWeatherForecast = async (
     startDate: string,
     endDate: string
 ): Promise<WeatherForecastDay[]> => {
-    console.log(`Simulating weather forecast fetch for ${destination} from ${startDate} to ${endDate}.`);
-    await new Promise(res => setTimeout(res, 1200)); 
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Import weather service dynamically to avoid circular dependencies
+    const { weatherService } = await import('./weatherService.ts');
     
-    const filteredForecast = MOCK_WEATHER_FORECAST.filter(day => {
-        const dayDate = new Date(day.date);
-        return dayDate >= start && dayDate <= end;
-    });
+    try {
+        return await weatherService.getWeatherForecast(destination, startDate, endDate);
+    } catch (error) {
+        console.error('Error fetching weather forecast:', error);
+        
+        // Fallback to mock data
+        console.log(`Using mock weather forecast for ${destination} from ${startDate} to ${endDate}.`);
+        await new Promise(res => setTimeout(res, 800)); 
 
-    return Promise.resolve(filteredForecast.length > 0 ? filteredForecast : MOCK_WEATHER_FORECAST.slice(0, 5));
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        const filteredForecast = MOCK_WEATHER_FORECAST.filter(day => {
+            const dayDate = new Date(day.date);
+            return dayDate >= start && dayDate <= end;
+        });
+
+        return Promise.resolve(filteredForecast.length > 0 ? filteredForecast : MOCK_WEATHER_FORECAST.slice(0, 5));
+    }
 };
 
 export const findBestActivities = async (trip: Trip): Promise<ActivityCandidate[]> => {

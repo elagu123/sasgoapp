@@ -1,12 +1,13 @@
 import prisma from '../lib/prisma';
 import type { PackingList } from '@prisma/client';
-import type { PatchOp, PackingListItem } from '../../../src/types';
+import { Prisma } from '@prisma/client';
+import type { PatchOp, PackingListItem } from '../types';
 
 const packingListWithIncludes = {
     include: {
         items: {
             orderBy: {
-                order: 'asc'
+                order: Prisma.SortOrder.asc
             }
         },
         trip: {
@@ -86,7 +87,7 @@ export const patchPackingList = async (listId: string, op: PatchOp, payload: any
     }
 
     switch (op) {
-        case 'add_item': {
+        case 'add': {
             const { item } = payload as { item: Omit<PackingListItem, 'id'> };
             return prisma.packingList.update({
                 where: { id: listId },
@@ -98,22 +99,22 @@ export const patchPackingList = async (listId: string, op: PatchOp, payload: any
                 ...packingListWithIncludes
             });
         }
-        case 'update_item': {
+        case 'replace': {
             const { itemId, fields } = payload as { itemId: string, fields: Partial<PackingListItem> };
             await prisma.packingListItem.updateMany({
-                where: { id: itemId, listId: listId },
+                where: { id: itemId, packingListId: listId },
                 data: fields,
             });
             break;
         }
-        case 'remove_item': {
+        case 'remove': {
             const { itemId } = payload as { itemId: string };
             await prisma.packingListItem.deleteMany({
-                where: { id: itemId, listId: listId },
+                where: { id: itemId, packingListId: listId },
             });
             break;
         }
-        case 'reorder_items': {
+        case 'move': {
             const { itemIds } = payload as { itemIds: string[] };
             const updates = itemIds.map((id, index) => 
                 prisma.packingListItem.update({

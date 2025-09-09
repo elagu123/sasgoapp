@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { dashboardFilterStore } from '../state/dashboardFilters.ts';
 import { useTrips } from '../hooks/useTrips.ts';
 import { sanitize } from '../lib/sanitize.ts';
+import { uploadTripImage } from '../services/api.ts';
 
 import { DashboardSkeleton } from '../components/dashboard/Skeletons.tsx';
 import KpiCard from '../components/dashboard/KpiCard.tsx';
@@ -47,17 +48,40 @@ const DashboardPage: React.FC = () => {
         setFormOpen(true);
     };
 
-    const handleSaveTrip = (tripData: Partial<Trip>) => {
-        if (editingTrip) {
-            updateTrip.mutate({ ...tripData, id: editingTrip.id, version: editingTrip.version }, {
-                onError: (error: any) => {
-                    if (error.status === 409) {
-                        setConflict({ local: { ...editingTrip, ...tripData }, remote: error.body.remote, version: editingTrip.version || 0 });
+    const handleSaveTrip = async (tripData: Partial<Trip>, imageFile?: File) => {
+        try {
+            if (editingTrip) {
+                updateTrip.mutate({ ...tripData, id: editingTrip.id, version: editingTrip.version }, {
+                    onSuccess: async (updatedTrip) => {
+                        if (imageFile) {
+                            try {
+                                await uploadTripImage(updatedTrip.id, imageFile);
+                            } catch (error) {
+                                console.error('Error uploading image:', error);
+                            }
+                        }
+                    },
+                    onError: (error: any) => {
+                        if (error.status === 409) {
+                            setConflict({ local: { ...editingTrip, ...tripData }, remote: error.body.remote, version: editingTrip.version || 0 });
+                        }
                     }
-                }
-            });
-        } else {
-            createTrip.mutate(tripData);
+                });
+            } else {
+                createTrip.mutate(tripData, {
+                    onSuccess: async (newTrip) => {
+                        if (imageFile) {
+                            try {
+                                await uploadTripImage(newTrip.id, imageFile);
+                            } catch (error) {
+                                console.error('Error uploading image:', error);
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error saving trip:', error);
         }
         setFormOpen(false);
     };

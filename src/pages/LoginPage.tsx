@@ -19,9 +19,20 @@ const LoginPage: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await login(email, password);
+            const userData = await login(email, password);
             addToast('¡Bienvenido de nuevo!', 'success');
-            navigate(from, { replace: true });
+            
+            // Check if user needs onboarding
+            const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${userData.id}`);
+            const hasPreferences = userData.preferences && 
+                userData.preferences.travelStyle && 
+                userData.preferences.preferredCategories.length > 0;
+
+            if (!hasCompletedOnboarding && !hasPreferences) {
+                navigate('/onboarding', { replace: true });
+            } else {
+                navigate(from, { replace: true });
+            }
         } catch (error: any) {
             addToast(error.message || 'Credenciales inválidas. Por favor, intenta de nuevo.', 'error');
             console.error(error);

@@ -24,7 +24,7 @@ const formatCurrency = (amountInCents: number, currency: string) => {
     }).format(amountInCents / 100);
 };
 
-const ExpenseItem: React.FC<{ expense: Expense; onDelete: (id: string) => void }> = ({ expense, onDelete }) => (
+const ExpenseItem: React.FC<{ expense: Expense; onEdit: (expense: Expense) => void; onDelete: (id: string) => void }> = ({ expense, onEdit, onDelete }) => (
     <div className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors group">
         <div className="text-2xl mr-4">{categoryIcons[expense.category]}</div>
         <div className="flex-grow">
@@ -36,13 +36,24 @@ const ExpenseItem: React.FC<{ expense: Expense; onDelete: (id: string) => void }
         <div className="text-right">
             <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(expense.amount, expense.currency)}</p>
         </div>
-        <div className="pl-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="pl-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-2">
+            <button 
+                onClick={() => onEdit(expense)}
+                className="text-blue-500 hover:text-blue-700 p-1"
+                aria-label={`Editar gasto ${expense.title}`}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+            </button>
             <button 
                 onClick={() => onDelete(expense.id)}
                 className="text-red-500 hover:text-red-700 p-1"
                 aria-label={`Eliminar gasto ${expense.title}`}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
             </button>
         </div>
     </div>
@@ -63,7 +74,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onUpdate, onDelete 
     return (
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {sortedExpenses.map(expense => (
-                <ExpenseItem key={expense.id} expense={expense} onDelete={onDelete} />
+                <ExpenseItem key={expense.id} expense={expense} onEdit={onUpdate} onDelete={onDelete} />
             ))}
         </div>
     );

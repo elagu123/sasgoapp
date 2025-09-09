@@ -28,6 +28,12 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
         return next();
     }
 
+    // Skip CSRF protection in development mode
+    if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ CSRF protection disabled in development mode');
+        return next();
+    }
+
     const csrfTokenFromHeader = req.headers['x-csrf-token'];
     const csrfTokenFromCookie = req.cookies['csrf-token'];
 

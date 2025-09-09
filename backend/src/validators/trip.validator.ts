@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const createTripSchema = z.object({
   body: z.object({
     title: z.string().min(1, 'El título es requerido'),
-    destination: z.array(z.string()).min(1, 'El destino es requerido'),
+    destination: z.string().min(1, 'El destino es requerido'),
     startDate: z.string().transform((date, ctx) => {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             // FIX: Use 'custom' issue code as 'invalid_format' requires a 'format' property not provided.
@@ -34,7 +34,7 @@ export const createTripSchema = z.object({
 export const updateTripSchema = z.object({
   body: z.object({
     title: z.string().min(1).optional(),
-    destination: z.array(z.string()).min(1).optional(),
+    destination: z.string().min(1).optional(),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
     budget: z.number().optional(),

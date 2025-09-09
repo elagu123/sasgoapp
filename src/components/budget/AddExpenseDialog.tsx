@@ -1,17 +1,26 @@
 
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Expense, ExpenseCategory } from '../../types.ts';
+import { getSmartExpenseSuggestions } from '../../lib/expenseSuggestions.ts';
 
 interface AddExpenseDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'tripId'>) => void;
+  onUpdateExpense?: (expense: Expense) => void;
   isSubmitting: boolean;
+  initialData?: Expense | null;
+  tripData?: {
+    destination?: string;
+    pace?: string;
+    travelers?: number;
+    dates?: { start: string; end: string };
+  };
 }
 
 const expenseSchema = z.object({
@@ -34,21 +43,56 @@ const categoryOptions: { value: ExpenseCategory, label: string }[] = [
     { value: 'otros', label: 'Otros' },
 ];
 
-const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onClose, onAddExpense, isSubmitting }) => {
+const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ 
+    isOpen, 
+    onClose, 
+    onAddExpense, 
+    onUpdateExpense, 
+    isSubmitting, 
+    initialData,
+    tripData 
+}) => {
+    const isEditing = !!initialData;
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [smartSuggestions, setSmartSuggestions] = useState<any[]>([]);
+    
     const { register, handleSubmit, reset, formState: { errors } } = useForm<ExpenseFormData>({
         resolver: zodResolver(expenseSchema),
         defaultValues: {
-            date: new Date().toISOString().split('T')[0],
-            currency: 'USD',
-            category: 'comida',
+            title: initialData?.title || '',
+            amount: initialData ? initialData.amount / 100 : 0, // Convert from cents
+            currency: initialData?.currency || 'USD',
+            date: initialData?.date || new Date().toISOString().split('T')[0],
+            category: initialData?.category || 'comida',
         }
     });
 
+    // Reset form when initialData changes
+    React.useEffect(() => {
+        if (isOpen) {
+            reset({
+                title: initialData?.title || '',
+                amount: initialData ? initialData.amount / 100 : 0,
+                currency: initialData?.currency || 'USD',
+                date: initialData?.date || new Date().toISOString().split('T')[0],
+                category: initialData?.category || 'comida',
+            });
+        }
+    }, [initialData, isOpen, reset]);
+
     const handleFormSubmit = (data: ExpenseFormData) => {
-        onAddExpense({
-            ...data,
-            amount: Math.round(data.amount * 100), // Convert to cents
-        });
+        if (isEditing && initialData && onUpdateExpense) {
+            onUpdateExpense({
+                ...initialData,
+                ...data,
+                amount: Math.round(data.amount * 100), // Convert to cents
+            });
+        } else {
+            onAddExpense({
+                ...data,
+                amount: Math.round(data.amount * 100), // Convert to cents
+            });
+        }
         reset();
     };
 
@@ -66,7 +110,9 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onClose, on
                         transition={{ duration: 0.2, ease: 'easeOut' }}
                         className="relative bg-white dark:bg-gray-800 w-full max-w-lg rounded-lg shadow-xl p-6"
                     >
-                        <h2 className="text-xl font-bold mb-4">Añadir Nuevo Gasto</h2>
+                        <h2 className="text-xl font-bold mb-4">
+                            {isEditing ? '✏️ Editar Gasto' : '➕ Añadir Nuevo Gasto'}
+                        </h2>
                         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
                             <div>
                                 <label htmlFor="title" className="block text-sm font-medium">Descripción</label>
@@ -104,7 +150,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onClose, on
                             <div className="mt-6 flex justify-end space-x-3">
                                 <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Cancelar</button>
                                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400">
-                                    {isSubmitting ? 'Guardando...' : 'Guardar Gasto'}
+                                    {isSubmitting ? 'Guardando...' : (isEditing ? 'Actualizar Gasto' : 'Guardar Gasto')}
                                 </button>
                             </div>
                         </form>

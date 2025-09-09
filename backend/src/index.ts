@@ -14,7 +14,7 @@ import rateLimit from 'express-rate-limit';
 import apiRouter from './routes';
 import http from 'http';
 import { WebSocketServer } from 'ws';
-import { setupWSConnection } from 'y-websocket/bin/utils';
+const { setupWSConnection } = require('y-websocket/bin/utils');
 import prisma from './lib/prisma';
 import * as Y from 'yjs';
 import { csrfProtection } from './middleware/csrf.middleware';
@@ -53,6 +53,10 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Only log requests in development mode
 if (process.env.NODE_ENV === 'development') {
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -136,7 +140,7 @@ const persistence = {
     try {
         const trip = await prisma.trip.findUnique({ where: { id: docName } });
         if (trip && trip.itinerary) {
-            const itineraryJson = trip.itinerary as any[];
+            const itineraryJson = JSON.parse(trip.itinerary);
             // FIX: Explicitly type the Y.Array to resolve type mismatch errors downstream.
             const yItinerary: Y.Array<Y.Map<any>> = ydoc.getArray<Y.Map<any>>('itinerary');
             if (yItinerary.length === 0 && itineraryJson.length > 0) {
@@ -155,7 +159,7 @@ const persistence = {
             const itineraryJSON = ydoc.getArray('itinerary').toJSON();
             await prisma.trip.update({
                 where: { id: docName },
-                data: { itinerary: itineraryJSON },
+                data: { itinerary: JSON.stringify(itineraryJSON) },
             });
             console.log(`[Yjs] Persisted doc: ${docName}`);
         } catch (e) {
@@ -228,60 +232,78 @@ const checkWebSocketRateLimit = (ip: string): boolean => {
   return true;
 };
 
+// WebSocket connection handler with authentication and rate limiting
 wss.on('connection', async (conn, req) => {
-  const clientIP = req.socket.remoteAddress || 'unknown';
+  const clientIp = req.socket.remoteAddress || 'unknown';
   
-  // Rate limiting check
-  if (!checkWebSocketRateLimit(clientIP)) {
-    console.warn(`[WebSocket] Rate limit exceeded for IP: ${clientIP}`);
+  // Rate limiting
+  if (!checkWebSocketRateLimit(clientIp)) {
+    console.warn(`[WebSocket] Rate limit exceeded for IP: ${clientIp}`);
     conn.close(1008, 'Rate limit exceeded');
     return;
   }
-  
-  // Authentication check
+
+  // Authentication
   const auth = authenticateWebSocket(req);
   if (!auth.authorized) {
-    console.warn(`[WebSocket] Unauthorized connection attempt from IP: ${clientIP}`);
+    console.warn(`[WebSocket] Unauthorized connection attempt from IP: ${clientIp}`);
     conn.close(1008, 'Unauthorized');
     return;
   }
-  
-  // Verify user has access to the trip
+
+  const { userId, tripId } = auth;
+  console.log(`[WebSocket] New authenticated connection - User: ${userId}, Trip: ${tripId}, IP: ${clientIp}`);
+
+  // Verify user has access to this trip
   try {
     const trip = await prisma.trip.findFirst({
       where: {
-        id: auth.tripId,
+        id: tripId,
         OR: [
-          { userId: auth.userId },
-          { sharedWith: { some: { userId: auth.userId } } }
+          { userId: userId }, // Owner
+          { 
+            sharedTrips: {
+              some: { userId: userId }
+            }
+          } // Member
         ]
       }
     });
-    
+
     if (!trip) {
-      console.warn(`[WebSocket] User ${auth.userId} denied access to trip ${auth.tripId}`);
-      conn.close(1008, 'Access denied to trip');
+      console.warn(`[WebSocket] User ${userId} doesn't have access to trip ${tripId}`);
+      conn.close(1008, 'Access denied');
       return;
     }
+
+    // Setup Y.js WebSocket connection with custom persistence
+    const utils = require('y-websocket/bin/utils.cjs');
+    
+    // Set up persistence for this document
+    const docName = tripId!;
+    if (!writeDebounced.has(docName)) {
+      // Create a Y.Doc and bind persistence
+      const ydoc = new Y.Doc();
+      await persistence.bindState(docName, ydoc);
+      
+      // Store the document for reuse
+      utils.docs.set(docName, ydoc);
+    }
+    
+    setupWSConnection(conn, req, tripId);
+
+    console.log(`[WebSocket] Successfully connected user ${userId} to trip ${tripId}`);
+
   } catch (error) {
-    console.error('[WebSocket] Error verifying trip access:', error);
+    console.error(`[WebSocket] Error verifying trip access:`, error);
     conn.close(1011, 'Server error');
-    return;
   }
-  
-  console.log(`[WebSocket] Authenticated connection for user ${auth.userId} to trip ${auth.tripId}`);
-  
-  // Set up the Yjs connection with the authenticated user context
-  setupWSConnection(conn, req, { 
-    persistence,
-    docName: auth.tripId // Use tripId as document name for isolation
-  });
 });
 
 // Iniciar el servidor
 server.listen(PORT, () => {
   console.log(`🚀 Server is running at http://localhost:${PORT}`);
-  console.log(`🚀 WebSocket server is running on ws://localhost:${PORT}`);
+  console.log(`🔗 WebSocket server enabled for real-time collaboration`);
 });
 
 export default app;

@@ -38,10 +38,11 @@ export interface TripMember {
 
 export interface Invite {
     id: string;
-    tripId: string;
     email: string;
     role: Role;
-    status: 'pending' | 'accepted';
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+    invitedAt: string;
+    invitedBy: string;
 }
 
 export type ExpenseCategory = 'alojamiento' | 'comida' | 'transporte' | 'ocio' | 'compras' | 'otros';
@@ -89,7 +90,7 @@ export interface Trip {
         end: string;   // YYYY-MM-DD
     };
     travelers: number;
-    pace: 'relaxed' | 'moderate' | 'fast-paced';
+    pace: 'relaxed' | 'moderate' | 'intense';
     budget: number; // In whole currency units, e.g., dollars
     interests: string[];
     createdAt: string; // ISO 8601

@@ -93,7 +93,7 @@ export const MOCK_TRIPS: Trip[] = [
         destination: ['Salta, Argentina', 'Jujuy, Argentina'],
         dates: { start: toYYYYMMDD(tripFinishedStart), end: toYYYYMMDD(tripFinishedEnd) }, // Finished
         travelers: 1,
-        pace: 'fast-paced',
+        pace: 'intense',
         budget: 1500,
         interests: ['cultura', 'historia', 'naturaleza'],
         createdAt: '2024-03-20T09:00:00Z',
@@ -212,6 +212,6 @@ export const MOCK_PARSED_TICKET: Ticket = {
 };
 
 export const MOCK_PUBLIC_TRIPS: Trip[] = [
-    { id: 'pub-trip1', userId: 'user2', title: 'Trekking en El Chaltén', destination: ['El Chaltén, Argentina'], dates: { start: '2024-11-10', end: '2024-11-18' }, travelers: 1, pace: 'fast-paced', budget: 1800, interests: ['trekking', 'montaña', 'naturaleza'], createdAt: '2024-07-01T10:00:00Z', members: [], privacy: 'public', imageUrl: 'https://images.unsplash.com/photo-1588252281179-d4b53512b9f3?q=80&w=800' },
+    { id: 'pub-trip1', userId: 'user2', title: 'Trekking en El Chaltén', destination: ['El Chaltén, Argentina'], dates: { start: '2024-11-10', end: '2024-11-18' }, travelers: 1, pace: 'intense', budget: 1800, interests: ['trekking', 'montaña', 'naturaleza'], createdAt: '2024-07-01T10:00:00Z', members: [], privacy: 'public', imageUrl: 'https://images.unsplash.com/photo-1588252281179-d4b53512b9f3?q=80&w=800' },
     { id: 'pub-trip2', userId: 'user3', title: 'Viñedos y Bodegas en Mendoza', destination: ['Mendoza, Argentina'], dates: { start: '2024-10-05', end: '2024-10-11' }, travelers: 2, pace: 'relaxed', budget: 2200, interests: ['vinos', 'gastronomía'], createdAt: '2024-06-20T10:00:00Z', members: [], privacy: 'public', imageUrl: 'https://images.unsplash.com/photo-1568942395273-513a8a3a0329?q=80&w=800' },
 ];

@@ -10,9 +10,18 @@ import {
     getAllTripsHandler,
     getTripByIdHandler,
     shareTripHandler,
-    updateTripHandler
+    updateTripHandler,
+    getTripMembersHandler,
+    updateMemberRoleHandler,
+    removeMemberHandler,
+    acceptInvitationHandler,
+    rejectInvitationHandler,
+    cancelInvitationHandler,
+    uploadTripImageHandler,
+    deleteTripImageHandler
 } from '../controllers/trip.controller';
 import { createTripSchema, updateTripSchema, shareTripSchema } from '../validators/trip.validator';
+import { uploadTripImage } from '../config/multer';
 
 const router = Router();
 
@@ -29,5 +38,17 @@ router.route('/:id')
     .delete(deleteTripHandler);
     
 router.post('/:id/share', validate(shareTripSchema), shareTripHandler);
+router.get('/:id/members', getTripMembersHandler);
+router.patch('/:id/members/:memberId/role', updateMemberRoleHandler);
+router.delete('/:id/members/:memberId', removeMemberHandler);
+
+// Invitation management routes
+router.post('/invitations/:invitationId/accept', acceptInvitationHandler);
+router.post('/invitations/:invitationId/reject', rejectInvitationHandler);
+router.delete('/invitations/:invitationId', cancelInvitationHandler);
+
+// Image upload routes
+router.post('/:id/image', uploadTripImage.single('image'), uploadTripImageHandler);
+router.delete('/:id/image', deleteTripImageHandler);
 
 export default router;

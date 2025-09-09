@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTripMembers, inviteUser, updateMemberRole } from '../services/api.ts';
+import { getTripMembers, inviteUser, updateMemberRole, removeMember, cancelInvitation } from '../services/api.ts';
 import type { Role } from '../types.ts';
 import { useToast } from './useToast.ts';
 import { MEMBERS_QUERY_KEY } from '../queryKeys.ts';
@@ -36,12 +36,36 @@ export const useCollaboration = (tripId: string) => {
         }
     });
 
+    const remove = useMutation({
+        mutationFn: (memberId: string) => removeMember(tripId, memberId),
+        onSuccess: () => {
+            addToast('Miembro removido.', 'success');
+            queryClient.invalidateQueries({ queryKey: [MEMBERS_QUERY_KEY, tripId] });
+        },
+        onError: () => {
+            addToast('Error al remover el miembro.', 'error');
+        }
+    });
+
+    const cancel = useMutation({
+        mutationFn: (invitationId: string) => cancelInvitation(invitationId),
+        onSuccess: () => {
+            addToast('Invitación cancelada.', 'success');
+            queryClient.invalidateQueries({ queryKey: [MEMBERS_QUERY_KEY, tripId] });
+        },
+        onError: () => {
+            addToast('Error al cancelar la invitación.', 'error');
+        }
+    });
+
     return {
         members: data?.members ?? [],
         invites: data?.invites ?? [],
         isLoading,
         error,
         inviteUser: invite.mutate,
-        updateMemberRole: updateRole.mutate
+        updateMemberRole: updateRole.mutate,
+        removeMember: remove.mutate,
+        cancelInvitation: cancel.mutate
     };
 };

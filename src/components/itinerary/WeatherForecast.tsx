@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { WeatherForecastDay } from '../../types';
 import { motion } from 'framer-motion';
+import { weatherService } from '../../services/weatherService.ts';
 
 interface WeatherForecastProps {
     isLoading: boolean;
@@ -38,16 +39,41 @@ const WeatherForecastSkeleton: React.FC = () => (
 
 
 const WeatherForecast: React.FC<WeatherForecastProps> = ({ isLoading, forecast }) => {
+    const [isRealData, setIsRealData] = useState(false);
+
+    useEffect(() => {
+        setIsRealData(weatherService.isApiKeyConfigured());
+    }, []);
+
     return (
         <div className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-lg">
-            <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-gray-200">Pronóstico del Tiempo</h3>
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Pronóstico del Tiempo</h3>
+                {!isRealData && (
+                    <div className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-md">
+                        Datos simulados
+                    </div>
+                )}
+                {isRealData && (
+                    <div className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-md">
+                        Datos reales
+                    </div>
+                )}
+            </div>
             <div className="flex space-x-4 overflow-x-auto pb-2 -mb-2">
                 {isLoading ? (
                     <WeatherForecastSkeleton />
                 ) : forecast && forecast.length > 0 ? (
                     forecast.map(day => <WeatherDayCard key={day.date} day={day} />)
                 ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay pronóstico disponible.</p>
+                    <div className="text-center py-4 w-full">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">No hay pronóstico disponible.</p>
+                        {!isRealData && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                                Configure REACT_APP_WEATHER_API_KEY para datos reales
+                            </p>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

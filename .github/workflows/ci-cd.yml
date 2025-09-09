@@ -1,0 +1,313 @@
+# SASGOAPP CI/CD Pipeline
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Code Quality and Testing
+  test:
+    name: Test & Quality Check
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_sasgoapp
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install frontend dependencies
+      run: npm ci
+
+    - name: Install backend dependencies
+      run: cd backend && npm ci
+
+    - name: TypeScript type check (Frontend)
+      run: npm run type-check
+
+    - name: TypeScript type check (Backend)
+      run: cd backend && npx tsc --noEmit
+
+    - name: Run frontend tests
+      run: npm run test:ci
+      env:
+        CI: true
+
+    - name: Run backend tests
+      run: cd backend && npm run test
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_sasgoapp
+        JWT_ACCESS_SECRET: test_access_secret_for_ci_pipeline_32_chars_min
+        JWT_REFRESH_SECRET: test_refresh_secret_for_ci_pipeline_32_chars_min
+        NODE_ENV: test
+
+    - name: Setup Playwright
+      run: npx playwright install --with-deps
+
+    - name: Run E2E tests
+      run: npm run test:e2e
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_sasgoapp
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          test-results/
+          coverage/
+        retention-days: 30
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Node.js security audit
+      run: |
+        npm audit --audit-level=moderate
+        cd backend && npm audit --audit-level=moderate
+
+  # Build Docker Images
+  build:
+    name: Build Images
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.frontend
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.backend
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/sasgoapp-staging
+          git pull origin develop
+          ./deploy.sh --force --no-backup
+          
+          # Wait for health check
+          sleep 30
+          curl -f http://localhost/api/health || exit 1
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/sasgoapp
+          git pull origin main
+          ./deploy.sh --force
+          
+          # Wait for health check
+          sleep 60
+          curl -f https://${{ secrets.PRODUCTION_DOMAIN }}/api/health || exit 1
+
+    - name: Notify deployment success
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: '🚀 SASGOAPP deployed successfully to production!'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Notify deployment failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: '❌ SASGOAPP production deployment failed!'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Database Migrations
+  migrate-production:
+    name: Production DB Migration
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Run database migrations
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/sasgoapp
+          docker-compose exec -T backend npx prisma migrate deploy
+          
+          # Verify migration success
+          docker-compose exec -T backend npx prisma db push --accept-data-loss=false
+
+  # Performance Testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        urls: |
+          https://${{ secrets.PRODUCTION_DOMAIN }}
+          https://${{ secrets.PRODUCTION_DOMAIN }}/login
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+    - name: Run load testing with Artillery
+      run: |
+        npm install -g artillery
+        artillery run tests/load/api-load-test.yml --target https://${{ secrets.PRODUCTION_DOMAIN }}
+
+# Workflow completion notification
+  notify-completion:
+    name: Notify Completion
+    runs-on: ubuntu-latest
+    needs: [deploy-production, migrate-production, performance-test]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Notify completion
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          SASGOAPP CI/CD Pipeline Completed
+          
+          Deployment: ${{ needs.deploy-production.result }}
+          Migration: ${{ needs.migrate-production.result }}
+          Performance: ${{ needs.performance-test.result }}
+          
+          Build: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}

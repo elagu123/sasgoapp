@@ -9,6 +9,7 @@ import { registerHandler, loginHandler, refreshHandler, logoutHandler, meHandler
 import validate from '../middleware/validate.middleware';
 import { registerSchema, loginSchema } from '../validators/auth.validator';
 import { protect } from '../middleware/auth.middleware';
+import { setCsrfCookie } from '../middleware/csrf.middleware';
 
 const router = Router();
 
@@ -21,6 +22,12 @@ const authLimiter = rateLimit({
 	legacyHeaders: false,
 });
 
+
+// CSRF token endpoint
+router.get('/csrf-token', (req, res) => {
+    setCsrfCookie(res);
+    res.json({ message: 'CSRF token set' });
+});
 
 router.post('/register', authLimiter, validate(registerSchema), registerHandler);
 router.post('/login', authLimiter, validate(loginSchema), loginHandler);

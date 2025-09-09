@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -19,8 +19,10 @@ model User {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  trips       Trip[]
-  sharedTrips SharedTrip[]
+  trips              Trip[]
+  sharedTrips        SharedTrip[]
+  gear               Gear[]
+  invitationsSent    Invitation[] @relation("InvitationSender")
 
   @@map("users")
 }
@@ -28,20 +30,20 @@ model User {
 model Trip {
   id                     String    @id @default(cuid())
   title                  String
-  destination            String[]
+  destination            String
   startDate              DateTime
   endDate                DateTime
   budget                 Float?
-  itinerary              Json?
+  itinerary              String?
   privacy                String?   @default("private")
   itineraryCompletion    Int?      @default(0)
-  packingProgress        Json?
+  packingProgress        String?
   imageUrl               String?
   selectedAccommodationId String?
   travelers              Int?      @default(1)
   pace                   String?
-  interests              String[]
-  weather                Json?
+  interests              String?
+  weather                String?
   version                Int       @default(1)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
@@ -50,6 +52,7 @@ model Trip {
   userId       String
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   sharedWith   SharedTrip[]
+  invitations  Invitation[]
   expenses     Expense[]
   reservations Reservation[]
   packingList  PackingList?
@@ -71,6 +74,24 @@ model SharedTrip {
   @@map("shared_trips")
 }
 
+model Invitation {
+  id              String   @id @default(cuid())
+  email           String
+  permissionLevel String   // 'VIEWER' | 'EDITOR'
+  status          String   @default("PENDING") // 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
+  invitedAt       DateTime @default(now())
+  respondedAt     DateTime?
+
+  // Relations
+  tripId      String
+  trip        Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  invitedById String
+  invitedBy   User   @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, email])
+  @@map("invitations")
+}
+
 model Expense {
   id          String   @id @default(cuid())
   amount      Float
@@ -90,7 +111,7 @@ model Reservation {
   id          String   @id @default(cuid())
   type        String
   title       String
-  details     Json
+  details     String
   date        DateTime
   createdAt   DateTime @default(now())
 
@@ -140,6 +161,8 @@ model Gear {
   weight      Float?
   description String?
   imageUrl    String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
