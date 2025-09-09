@@ -1,0 +1,7 @@
+{
+  "name": "SAS Go App",
+  "description": "A smart travel application with an offline-first experience, an AI copilot that learns from the user, and modules for packing lists, itineraries, weather, maps, PDFs, and a 'save money' feature.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

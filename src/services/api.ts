@@ -1,0 +1,306 @@
+import type { PatchOp, PackingList, PackingCategory, Trip, TripMember, Invite, Role, PackingListItem, User, Expense, Gear, Reservation } from '../types.ts';
+import { MOCK_FULL_PACKING_LIST_V6 } from '../constants.ts';
+import { v4 as uuidv4 } from 'uuid';
+
+// --- API CLIENT ---
+// Centraliza la lógica para hacer llamadas a la API del backend.
+// Se encarga de añadir el base URL, las cabeceras (como Authorization),
+// y de manejar las respuestas y errores de forma consistente.
+
+const API_BASE_URL = '/api'; // Usamos un proxy de Vite, o sería 'http://localhost:3001/api'
+
+let inMemoryAccessToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+    inMemoryAccessToken = token;
+};
+
+/**
+ * Lee el valor de una cookie específica del navegador.
+ * @param name El nombre de la cookie a leer.
+ * @returns El valor de la cookie o null si no se encuentra.
+ */
+const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+}
+
+class ApiError extends Error {
+    status: number;
+    body: any;
+
+    constructor(message: string, status: number, body: any) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.body = body;
+    }
+}
+
+const apiClient = async (endpoint: string, options: RequestInit = {}) => {
+    const token = inMemoryAccessToken;
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // --- CSRF Protection ---
+    // Para métodos que no son seguros, leemos la cookie csrf-token y la enviamos en la cabecera X-CSRF-Token.
+    const method = options.method?.toUpperCase();
+    if (method && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        const csrfToken = getCookie('csrf-token');
+        if (csrfToken) {
+            headers['X-CSRF-Token'] = csrfToken;
+        } else {
+            console.warn('Cookie de token CSRF no encontrada. La petición podría fallar.');
+        }
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
+    
+    // Si la respuesta no tiene cuerpo (ej. 204 No Content), no intentes parsear JSON
+    if (response.status === 204) {
+        return undefined;
+    }
+
+    const body = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(body.message || 'Error en la llamada a la API', response.status, body);
+    }
+
+    return body;
+};
+
+
+// --- Auth API ---
+
+export const login = async (email: string, password: string): Promise<{ accessToken: string; user: User }> => {
+    return apiClient('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+    });
+};
+
+export const register = async (name: string, email: string, password: string): Promise<{ user: User }> => {
+    return apiClient('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password }),
+    });
+};
+
+export const refreshToken = async (): Promise<{ accessToken: string }> => {
+    // The browser will automatically send the httpOnly refresh token cookie
+    return apiClient('/auth/refresh', { method: 'POST' });
+};
+
+export const logout = async (): Promise<void> => {
+    // Tell the backend to clear the httpOnly refresh token cookie
+    return apiClient('/auth/logout', { method: 'POST' });
+};
+
+export const getMe = async (): Promise<{ user: User }> => {
+    return apiClient('/auth/me');
+};
+
+
+// --- Trip API (Real Implementation) ---
+
+export const getTrips = async (): Promise<Trip[]> => {
+    return apiClient('/trips');
+};
+
+export const getTrip = async (tripId: string): Promise<Trip> => {
+    return apiClient(`/trips/${tripId}`);
+};
+
+export const createTrip = async (tripData: Partial<Omit<Trip, 'id'>>): Promise<Trip> => {
+    const payload = {
+        title: tripData.title,
+        destination: tripData.destination,
+        startDate: tripData.dates?.start,
+        endDate: tripData.dates?.end,
+        budget: tripData.budget
+    }
+    return apiClient('/trips', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+};
+
+export const updateTrip = async (tripId: string, tripData: Partial<Trip>): Promise<Trip> => {
+    // El backend espera `startDate` y `endDate` en el cuerpo, no anidados.
+    const payload = {
+        ...tripData,
+        startDate: tripData.dates?.start,
+        endDate: tripData.dates?.end,
+    };
+    delete payload.dates; // Limpiamos el objeto anidado
+
+    return apiClient(`/trips/${tripId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+    });
+};
+
+export const deleteTrip = async (tripId: string): Promise<void> => {
+    await apiClient(`/trips/${tripId}`, { method: 'DELETE' });
+};
+
+
+// --- Packing List API ---
+
+export const getPackingLists = async (): Promise<PackingList[]> => {
+    return apiClient('/packing');
+};
+
+export const getPackingList = async (packingId: string): Promise<PackingList> => {
+    return apiClient(`/packing/${packingId}`);
+};
+
+export const createPackingList = async (data: { tripId: string, title: string, items: Omit<PackingListItem, 'id' | 'packed'>[] }): Promise<PackingList> => {
+    return apiClient('/packing', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+};
+
+export const patchPackingList = async (packingId: string, op: PatchOp, payload: any): Promise<PackingList> => {
+    return apiClient(`/packing/${packingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ op, payload }),
+    });
+};
+
+// --- Expense API ---
+
+export const getExpenses = async (tripId: string): Promise<Expense[]> => {
+    return apiClient(`/expenses?tripId=${tripId}`);
+};
+
+export const createExpense = async (expenseData: Omit<Expense, 'id'>): Promise<Expense> => {
+    return apiClient('/expenses', {
+        method: 'POST',
+        body: JSON.stringify(expenseData),
+    });
+};
+
+export const deleteExpense = async (expenseId: string): Promise<void> => {
+    return apiClient(`/expenses/${expenseId}`, {
+        method: 'DELETE',
+    });
+};
+
+// --- Gear API ---
+
+export const getGearList = async (): Promise<Gear[]> => {
+    return apiClient('/gear');
+};
+
+export const getGearItem = async (gearId: string): Promise<Gear> => {
+    return apiClient(`/gear/${gearId}`);
+}
+
+export const createGear = async (gearData: any): Promise<Gear> => {
+    return apiClient('/gear', {
+        method: 'POST',
+        body: JSON.stringify(gearData),
+    });
+};
+
+// --- Reservation API ---
+export const getReservations = async (tripId: string): Promise<Reservation[]> => {
+    return apiClient(`/reservations?tripId=${tripId}`);
+};
+
+export const createReservation = async (reservationData: Omit<Reservation, 'id'>): Promise<Reservation> => {
+    return apiClient('/reservations', {
+        method: 'POST',
+        body: JSON.stringify(reservationData),
+    });
+};
+
+export const deleteReservation = async (reservationId: string): Promise<void> => {
+    return apiClient(`/reservations/${reservationId}`, {
+        method: 'DELETE',
+    });
+};
+
+
+// --- Mock APIs (unchanged for now) ---
+// El resto de las APIs (listas, gastos, etc.) se mantienen simuladas hasta que las integremos.
+
+export const patchItinerary = async (itineraryId: string, op: PatchOp, payload: any, opId: string) => {
+  console.log('PATCHING ITINERARY:', { itineraryId, op, payload, opId });
+  await new Promise(res => setTimeout(res, 500));
+  
+  if (payload.fields.title && payload.fields.title.toLowerCase().includes('conflict')) {
+      console.log("SIMULATING CONFLICT for block update");
+      const error: any = new Error("Simulated conflict on block update");
+      error.status = 409;
+      const remoteBlock = { 
+          ...payload.fields, 
+          title: 'Server Version Title',
+          description: 'This description was updated on the server.' 
+      };
+      error.body = { error: 'CONFLICT', remote: remoteBlock };
+      throw error;
+  }
+
+  return { ok: true };
+};
+
+export const resolvePackingTemplate = async (templateKey: string): Promise<{ items: { name: string; qty: number; category: PackingCategory; notes?: string }[] }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const templates = { 'playa_basico': [{ name: 'Traje de baño', qty: 2, category: 'ropa' as PackingCategory }] };
+    return { items: templates[templateKey as keyof typeof templates] || [] };
+};
+
+export const getPackingListPdf = async (packingId: string) => {
+    await new Promise(res => setTimeout(res, 1200));
+    const mockPdfBlob = new Blob(["Simulated PDF"], { type: 'application/pdf' });
+    return { blob: mockPdfBlob, filename: `packing-list-${packingId}.pdf` };
+};
+
+export const getItineraryPdf = async (itineraryId: string) => {
+    await new Promise(res => setTimeout(res, 1500));
+    const mockPdfBlob = new Blob(["Simulated PDF"], { type: 'application/pdf' });
+    return { blob: mockPdfBlob, filename: `itinerary-${itineraryId}.pdf` };
+};
+
+// --- Collaboration API (Real Implementation) ---
+
+export const getTripMembers = async (tripId: string): Promise<{ members: TripMember[], invites: Invite[] }> => {
+    // Esto debería llamar al endpoint del backend.
+    // Por ahora, simulamos la respuesta para no romper el modal de compartir.
+    console.warn(`[MOCK] GET /api/trips/${tripId}/members`);
+    await new Promise(res => setTimeout(res, 300));
+    const trip = await getTrip(tripId);
+    return {
+        members: trip.members,
+        invites: [] // El backend aún no modela `invites` de esta forma
+    };
+};
+
+export const inviteUser = async (tripId: string, email: string, role: Role): Promise<Trip> => {
+    return apiClient(`/trips/${tripId}/share`, {
+        method: 'POST',
+        body: JSON.stringify({ email, permissionLevel: role })
+    });
+};
+
+export const updateMemberRole = async (tripId: string, memberId: string, role: Role): Promise<{ ok: true }> => {
+    // El backend actual no tiene un endpoint para esto. Simulado por ahora.
+    console.warn(`[MOCK] PATCH /api/trips/${tripId}/role`, { memberId, role });
+    await new Promise(res => setTimeout(res, 400));
+    return { ok: true };
+};

@@ -1,0 +1,56 @@
+
+/* Using Tailwind CSS via CDN, this file is for global styles, variables, and minor overrides. */
+
+/* Define color palette using CSS variables for easy theming */
+:root {
+  --brand-primary: #2563eb; /* blue-600 */
+  --brand-secondary: #9333ea; /* purple-600 */
+  
+  /* Light Theme */
+  --surface: #f9fafb; /* gray-50 */
+  --surface-card: #ffffff;
+  --text-primary: #1f2937; /* gray-800 */
+  --text-secondary: #6b7280; /* gray-500 */
+  --progress-base: #e5e7eb; /* gray-200 */
+  --border-color: #d1d5db; /* gray-300 */
+}
+
+.dark {
+  --brand-primary: #3b82f6; /* blue-500 */
+  --brand-secondary: #a855f7; /* purple-500 */
+  
+  /* Dark Theme */
+  --surface: #1f2937; /* gray-800 */
+  --surface-card: #374151; /* gray-700 */
+  --text-primary: #f9fafb; /* gray-50 */
+  --text-secondary: #9ca3af; /* gray-400 */
+  --progress-base: #4b5563; /* gray-600 */
+  --border-color: #4b5563; /* gray-600 */
+}
+
+/* Apply a smooth transition to color changes */
+body, .bg-white, .bg-gray-50, .dark .bg-gray-800, .dark .bg-gray-900 {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* Custom component styles */
+.trip-card {
+    border-radius: 1.25rem; /* More rounded corners */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    border: 1px solid var(--border-color);
+}
+.trip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card {
+     border-radius: 1rem;
+     border: 1px solid var(--border-color);
+}
+
+/* Set body font for consistency */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
