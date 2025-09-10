@@ -1,7 +1,7 @@
 
 import { expect, test } from 'vitest';
-import { overlaps, durationMin } from '../../lib/itinerary-time.js';
-import type { HHMM } from '../../types';
+import { overlaps, durationMin } from '../../src/lib/itinerary-time';
+import type { HHMM } from '../../src/types';
 
 test('overlaps true when intervals clash', () => {
   const a = { start: '10:00' as HHMM, end: '11:00' as HHMM };

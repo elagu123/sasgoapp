@@ -86,7 +86,7 @@ export const patchPackingList = async (listId: string, op: PatchOp, payload: any
         return null;
     }
 
-    switch (op) {
+    switch (op.op) {
         case 'add': {
             const { item } = payload as { item: Omit<PackingListItem, 'id'> };
             return prisma.packingList.update({

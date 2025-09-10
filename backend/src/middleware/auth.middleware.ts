@@ -30,3 +30,6 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   (req as any).user = user;
   next();
 };
+
+// Alias for backward compatibility
+export const authenticateToken = protect;

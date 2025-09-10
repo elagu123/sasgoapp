@@ -96,7 +96,7 @@ const transformTrip = (trip: PrismaTripWithRelations): TripFE => {
     
     return {
         ...rest,
-        destination: trip.destination.split(', '), // Convert string back to array for frontend
+        destination: trip.destination, // Keep as string
         dates: {
             start: startDate.toISOString().split('T')[0],
             end: endDate.toISOString().split('T')[0],

@@ -61,11 +61,11 @@ describe('Trip API', () => {
         it('should return only trips owned by or shared with the user', async () => {
             // Viaje de User A
             await prisma.trip.create({
-                data: { title: 'User A Trip', userId: userA.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'User A Trip', destination: 'Paris', userId: userA.id, startDate: new Date(), endDate: new Date() }
             });
             // Viaje de User B
             await prisma.trip.create({
-                data: { title: 'User B Trip', userId: userB.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'User B Trip', destination: 'London', userId: userB.id, startDate: new Date(), endDate: new Date() }
             });
 
             const resA = await request(app)
@@ -81,7 +81,7 @@ describe('Trip API', () => {
     describe('GET /api/trips/:id', () => {
         it('should not allow a user to see another user\'s trip', async () => {
             const tripB = await prisma.trip.create({
-                data: { title: 'User B Secret Trip', userId: userB.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'User B Secret Trip', destination: 'Tokyo', userId: userB.id, startDate: new Date(), endDate: new Date() }
             });
 
             const resA = await request(app)
@@ -95,7 +95,7 @@ describe('Trip API', () => {
     describe('PUT /api/trips/:id', () => {
         it('should not allow a user to update another user\'s trip', async () => {
              const tripB = await prisma.trip.create({
-                data: { title: 'User B\'s Uneditable Trip', userId: userB.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'User B\'s Uneditable Trip', destination: 'Berlin', userId: userB.id, startDate: new Date(), endDate: new Date() }
             });
 
             const resA = await request(app)
@@ -110,7 +110,7 @@ describe('Trip API', () => {
     describe('DELETE /api/trips/:id', () => {
         it('should not allow a user to delete another user\'s trip', async () => {
             const tripB = await prisma.trip.create({
-                data: { title: 'User B\'s Indeletable Trip', userId: userB.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'User B\'s Indeletable Trip', destination: 'Rome', userId: userB.id, startDate: new Date(), endDate: new Date() }
             });
 
             const resA = await request(app)
@@ -125,7 +125,7 @@ describe('Trip API', () => {
         let tripA: any;
         beforeEach(async () => {
             tripA = await prisma.trip.create({
-                data: { title: 'Shared Trip', userId: userA.id, startDate: new Date(), endDate: new Date() }
+                data: { title: 'Shared Trip', destination: 'Barcelona', userId: userA.id, startDate: new Date(), endDate: new Date() }
             });
         });
 

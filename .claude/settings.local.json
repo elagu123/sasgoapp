@@ -12,7 +12,15 @@
       "Bash(node:*)",
       "Bash(npx tsc:*)",
       "Bash(chmod:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm test)",
+      "Bash(echo:*)",
+      "Bash(DATABASE_URL=\"file:./test.db\" npx prisma db push)",
+      "Bash(npx vite build:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

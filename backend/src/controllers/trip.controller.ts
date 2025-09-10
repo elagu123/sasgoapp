@@ -48,7 +48,7 @@ export const createTripHandler = async (req: Request, res: Response) => {
       destination: destinationString,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      budget: budget ? parseFloat(budget) : undefined,
+      budget: budget ? parseFloat(budget) : null,
       travelers: travelers ? parseInt(travelers) : 1,
       pace: pace || 'moderate'
     }, user.id);

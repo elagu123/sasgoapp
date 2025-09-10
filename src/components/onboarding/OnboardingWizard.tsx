@@ -1,136 +1,159 @@
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext.tsx';
-import { useToast } from '../../hooks/useToast.ts';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { UserProfile, Trip } from '../../types.ts';
-import { createTrip } from '../../services/api.ts';
-import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
+import {
+  User,
+  MapPin,
+  Heart,
+  DollarSign,
+  Users,
+  Plane,
+  Home,
+  Car,
+  Utensils,
+  Target,
+  ChevronLeft,
+  ChevronRight,
+  Check
+} from 'lucide-react';
 
 interface OnboardingData {
-  travelStyle: UserProfile['travelStyle'];
-  preferredCategories: string[];
-  budgetRange: 'low' | 'medium' | 'high' | 'luxury';
-  interests: string[];
-  firstTrip?: {
-    title: string;
-    destination: string[];
-    dates: { start: string; end: string };
-    travelers: number;
-    budget: number;
+  personalInfo: {
+    age?: string;
+    location?: string;
+    occupation?: string;
+    travelExperience?: string;
+  };
+  travelStyle: {
+    preferredPace?: string;
+    planningStyle?: string;
+    riskTolerance?: string;
+    groupPreference?: string;
+  };
+  interests: {
+    activities: string[];
+    themes: string[];
+    experiences: string[];
+  };
+  budget: {
+    range?: string;
+    priorities: string[];
+    flexibility?: string;
+  };
+  companions: {
+    usualCompanions?: string;
+    groupSize?: string;
+    travelWithPets?: boolean;
+  };
+  destinations: {
+    preferredTypes: string[];
+    climatePreference?: string;
+    culturalInterests: string[];
+    languageComfort?: string;
+  };
+  accommodations: {
+    preferredTypes: string[];
+    amenities: string[];
+    locationPreference?: string;
+  };
+  transportation: {
+    preferredMethods: string[];
+    comfortLevel?: string;
+    environmentalConcern?: string;
+  };
+  food: {
+    dietaryRestrictions: string[];
+    adventurousness?: string;
+    diningStyle?: string;
+  };
+  lifestyle: {
+    workSchedule?: string;
+    fitnessLevel?: string;
+    technologyComfort?: string;
+  };
+  goals: {
+    travelMotivations: string[];
+    personalGrowth: string[];
+    frequencyGoal?: string;
   };
 }
 
-interface OnboardingWizardProps {
-  onComplete: () => void;
-  onSkip: () => void;
-}
+const OnboardingWizard: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [data, setData] = useState<OnboardingData>({
+    personalInfo: {},
+    travelStyle: {},
+    interests: { activities: [], themes: [], experiences: [] },
+    budget: { priorities: [] },
+    companions: {},
+    destinations: { preferredTypes: [], culturalInterests: [] },
+    accommodations: { preferredTypes: [], amenities: [] },
+    transportation: { preferredMethods: [] },
+    food: { dietaryRestrictions: [] },
+    lifestyle: {},
+    goals: { travelMotivations: [], personalGrowth: [] }
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-const TRAVEL_STYLES: Array<{ value: UserProfile['travelStyle']; label: string; description: string; emoji: string }> = [
-  { value: 'backpacker', label: 'Mochilero', description: 'Aventurero, económico, experiencias auténticas', emoji: '🎒' },
-  { value: 'balanced', label: 'Equilibrado', description: 'Balance entre comodidad y aventura', emoji: '⚖️' },
-  { value: 'comfort', label: 'Confortable', description: 'Comodidad moderada, planificación cuidadosa', emoji: '🛏️' },
-  { value: 'luxury', label: 'Lujo', description: 'Experiencias premium, servicios de alta gama', emoji: '✨' }
-];
-
-const INTERESTS_OPTIONS = [
-  { value: 'sightseeing', label: 'Turismo y Monumentos', emoji: '🏛️' },
-  { value: 'food', label: 'Gastronomía', emoji: '🍽️' },
-  { value: 'culture', label: 'Arte y Cultura', emoji: '🎭' },
-  { value: 'outdoors', label: 'Actividades al Aire Libre', emoji: '🏔️' },
-  { value: 'nightlife', label: 'Vida Nocturna', emoji: '🌃' },
-  { value: 'shopping', label: 'Compras', emoji: '🛍️' },
-  { value: 'adventure', label: 'Deportes Extremos', emoji: '🪂' },
-  { value: 'wellness', label: 'Bienestar y Relajación', emoji: '🧘' },
-  { value: 'photography', label: 'Fotografía', emoji: '📸' },
-  { value: 'history', label: 'Historia', emoji: '📚' }
-];
-
-const BUDGET_RANGES = [
-  { value: 'low' as const, label: 'Económico', description: 'Hasta $500 por persona', emoji: '💰' },
-  { value: 'medium' as const, label: 'Medio', description: '$500 - $1500 por persona', emoji: '💳' },
-  { value: 'high' as const, label: 'Alto', description: '$1500 - $3000 por persona', emoji: '💎' },
-  { value: 'luxury' as const, label: 'Lujo', description: 'Más de $3000 por persona', emoji: '👑' }
-];
-
-const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onSkip }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, updatePreferences } = useAuth();
-  const { addToast } = useToast();
+  const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
 
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>({
-    travelStyle: 'balanced',
-    preferredCategories: [],
-    budgetRange: 'medium',
-    interests: []
-  });
+  const totalSteps = 11;
 
-  const updateData = useCallback((updates: Partial<OnboardingData>) => {
-    setOnboardingData(prev => ({ ...prev, ...updates }));
-  }, []);
+  const updateData = (section: keyof OnboardingData, newData: any) => {
+    setData(prev => ({
+      ...prev,
+      [section]: { ...prev[section], ...newData }
+    }));
+  };
 
-  const steps = [
-    { title: 'Bienvenido a SAS Go', subtitle: 'Tu asistente inteligente para viajes' },
-    { title: 'Tu Estilo de Viaje', subtitle: '¿Cómo prefieres viajar?' },
-    { title: 'Tus Intereses', subtitle: '¿Qué te gusta hacer cuando viajas?' },
-    { title: 'Presupuesto Preferido', subtitle: '¿Cuál es tu rango de presupuesto típico?' },
-    { title: 'Crea tu Primer Viaje', subtitle: 'Comencemos con tu próxima aventura' }
-  ];
+  const toggleArrayItem = (section: keyof OnboardingData, key: string, value: string) => {
+    setData(prev => {
+      const currentArray = (prev[section] as any)[key] || [];
+      const newArray = currentArray.includes(value)
+        ? currentArray.filter((item: string) => item !== value)
+        : [...currentArray, value];
+      
+      return {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [key]: newArray
+        }
+      };
+    });
+  };
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+    } else {
+      handleComplete();
     }
   };
 
-  const prevStep = () => {
-    if (currentStep > 0) {
+  const handlePrevious = () => {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
   const handleComplete = async () => {
-    setIsSubmitting(true);
-    
+    setIsLoading(true);
     try {
-      // Update user preferences
-      const newPreferences: UserProfile = {
-        travelStyle: onboardingData.travelStyle,
-        preferredCategories: onboardingData.interests,
-        budgetHistory: []
-      };
-
-      await updatePreferences(newPreferences);
-
-      // Create first trip if provided
-      if (onboardingData.firstTrip) {
-        const tripData: Omit<Trip, 'id' | 'userId' | 'createdAt' | 'members' | 'privacy'> = {
-          title: onboardingData.firstTrip.title,
-          destination: onboardingData.firstTrip.destination,
-          dates: onboardingData.firstTrip.dates,
-          travelers: onboardingData.firstTrip.travelers,
-          pace: onboardingData.travelStyle === 'backpacker' ? 'intense' : 
-                onboardingData.travelStyle === 'luxury' ? 'relaxed' : 'moderate',
-          budget: onboardingData.firstTrip.budget,
-          interests: onboardingData.interests
-        };
-
-        const newTrip = await createTrip(tripData);
-        addToast('¡Perfil configurado y primer viaje creado!', 'success');
-        navigate(`/app/trips/${newTrip.id}`);
-      } else {
-        addToast('¡Perfil configurado exitosamente!', 'success');
-        navigate('/app/dashboard');
-      }
-
-      onComplete();
+      await updateUserProfile({
+        onboardingData: data,
+        onboardingCompleted: true
+      });
+      
+      toast.success('¡Perfil personalizado completado!');
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Error completing onboarding:', error);
-      addToast('Error al configurar el perfil', 'error');
+      console.error('Error saving onboarding data:', error);
+      toast.error('Error al guardar los datos. Inténtalo de nuevo.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 

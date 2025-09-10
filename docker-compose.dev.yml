@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: sasgoapp-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sasgoapp-network
+
+  # PostgreSQL for production-like development
+  postgres:
+    image: postgres:15-alpine
+    container_name: sasgoapp-postgres-dev
+    environment:
+      POSTGRES_DB: sasgoapp_dev
+      POSTGRES_USER: sasgoapp_user
+      POSTGRES_PASSWORD: sasgoapp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sasgoapp_user -d sasgoapp_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sasgoapp-network
+
+  # Redis Insight for Redis GUI (optional)
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: sasgoapp-redis-insight
+    ports:
+      - "8001:8001"
+    environment:
+      - RIPORT=8001
+    depends_on:
+      - redis
+    networks:
+      - sasgoapp-network
+    profiles:
+      - tools
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+networks:
+  sasgoapp-network:
+    driver: bridge

@@ -262,7 +262,7 @@ wss.on('connection', async (conn, req) => {
         OR: [
           { userId: userId }, // Owner
           { 
-            sharedTrips: {
+            sharedWith: {
               some: { userId: userId }
             }
           } // Member
