@@ -5,7 +5,8 @@ import { toMin, fromMin } from '../lib/itinerary-time.ts';
 import { MOCK_GETAWAY_CANDIDATES, MOCK_FULL_GETAWAY_PLAN, MOCK_PUBLIC_TRIPS, MOCK_STAY_CANDIDATES, MOCK_WEATHER_FORECAST, MOCK_ACTIVITY_CANDIDATES, MOCK_PARSED_TICKET } from '../constants.ts';
 
 // Initialize ai only if API_KEY is available to prevent crashes.
-const ai = process.env.API_KEY ? new GoogleGenAI({ apiKey: process.env.API_KEY }) : null;
+const ai = process.env.API_KEY || import.meta.env.VITE_GEMINI_API_KEY ? 
+  new GoogleGenAI({ apiKey: process.env.API_KEY || import.meta.env.VITE_GEMINI_API_KEY }) : null;
 
 if (!ai) {
   console.warn("API_KEY environment variable not set. AI features will use mock responses.");

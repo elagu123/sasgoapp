@@ -18,6 +18,13 @@ export interface ItineraryBlock {
         lat: number;
         lng: number;
     };
+    // Nuevos campos para equipaje inteligente
+    suggestedItems?: ActivityPackingItem[];
+    weatherRequirements?: {
+        temperature: number;
+        condition: 'sunny' | 'cloudy' | 'rainy' | 'snowy';
+        recommendations: string[];
+    };
 }
 
 export interface ItineraryDay {
@@ -117,6 +124,15 @@ export interface Trip {
 
 export type PackingCategory = 'ropa' | 'calzado' | 'higiene' | 'electrónica' | 'documentos' | 'salud' | 'bebé' | 'trabajo' | 'otros';
 
+export interface ActivityPackingItem {
+    name: string;
+    category: PackingCategory;
+    priority: 1 | 2 | 3; // 1=indispensable, 2=recomendado, 3=opcional
+    reason: string; // Por qué se necesita para esta actividad
+    weatherDependent?: boolean;
+    timeOfDayRelevant?: 'morning' | 'afternoon' | 'evening' | 'night' | 'any';
+}
+
 export interface PackingListItem {
     id: string;
     name: string;
@@ -126,6 +142,11 @@ export interface PackingListItem {
     notes?: string;
     lastUpdatedOfflineAt?: number;
     order?: number;
+    // Nuevos campos para conexión con itinerario
+    relatedActivities?: string[]; // IDs de actividades que requieren este ítem
+    autoSuggested?: boolean; // Si fue sugerido automáticamente por IA
+    weatherRelevant?: boolean;
+    priority?: 1 | 2 | 3;
 }
 
 export interface PackingList {

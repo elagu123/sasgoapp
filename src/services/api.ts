@@ -142,10 +142,28 @@ export const getMe = async (): Promise<{ user: User }> => {
 // --- Trip API (Real Implementation) ---
 
 export const getTrips = async (): Promise<Trip[]> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_TRIPS } = await import('../constants.ts');
+        return Promise.resolve(MOCK_TRIPS);
+    }
+    
     return apiClient('/trips');
 };
 
 export const getTrip = async (tripId: string): Promise<Trip> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_TRIPS } = await import('../constants.ts');
+        const trip = MOCK_TRIPS.find(t => t.id === tripId);
+        if (trip) {
+            return Promise.resolve(trip);
+        }
+        throw new Error(`Trip with id ${tripId} not found`);
+    }
+    
     return apiClient(`/trips/${tripId}`);
 };
 
@@ -186,10 +204,28 @@ export const deleteTrip = async (tripId: string): Promise<void> => {
 // --- Packing List API ---
 
 export const getPackingLists = async (): Promise<PackingList[]> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_PACKING_LISTS } = await import('../constants.ts');
+        return Promise.resolve(MOCK_PACKING_LISTS);
+    }
+    
     return apiClient('/packing');
 };
 
 export const getPackingList = async (packingId: string): Promise<PackingList> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_PACKING_LISTS } = await import('../constants.ts');
+        const packingList = MOCK_PACKING_LISTS.find(pl => pl.id === packingId);
+        if (packingList) {
+            return Promise.resolve(packingList);
+        }
+        throw new Error(`Packing list with id ${packingId} not found`);
+    }
+    
     return apiClient(`/packing/${packingId}`);
 };
 
@@ -210,6 +246,14 @@ export const patchPackingList = async (packingId: string, op: PatchOp, payload: 
 // --- Expense API ---
 
 export const getExpenses = async (tripId: string): Promise<Expense[]> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_EXPENSES } = await import('../constants.ts');
+        const expenses = MOCK_EXPENSES.filter(expense => expense.tripId === tripId);
+        return Promise.resolve(expenses);
+    }
+    
     return apiClient(`/expenses?tripId=${tripId}`);
 };
 
@@ -236,10 +280,28 @@ export const deleteExpense = async (expenseId: string): Promise<void> => {
 // --- Gear API ---
 
 export const getGearList = async (): Promise<Gear[]> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_GEAR } = await import('../constants.ts');
+        return Promise.resolve(MOCK_GEAR);
+    }
+    
     return apiClient('/gear');
 };
 
 export const getGearItem = async (gearId: string): Promise<Gear> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_GEAR } = await import('../constants.ts');
+        const gear = MOCK_GEAR.find(g => g.id === gearId);
+        if (gear) {
+            return Promise.resolve(gear);
+        }
+        throw new Error(`Gear with id ${gearId} not found`);
+    }
+    
     return apiClient(`/gear/${gearId}`);
 }
 
@@ -252,6 +314,14 @@ export const createGear = async (gearData: any): Promise<Gear> => {
 
 // --- Reservation API ---
 export const getReservations = async (tripId: string): Promise<Reservation[]> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_RESERVATIONS } = await import('../constants.ts');
+        const reservations = MOCK_RESERVATIONS.filter(reservation => reservation.tripId === tripId);
+        return Promise.resolve(reservations);
+    }
+    
     return apiClient(`/reservations?tripId=${tripId}`);
 };
 
@@ -313,6 +383,20 @@ export const getItineraryPdf = async (itineraryId: string) => {
 // --- Collaboration API (Real Implementation) ---
 
 export const getTripMembers = async (tripId: string): Promise<{ members: TripMember[], invites: Invite[] }> => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Use mock data for development
+        const { MOCK_TRIPS } = await import('../constants.ts');
+        const trip = MOCK_TRIPS.find(t => t.id === tripId);
+        if (trip) {
+            return Promise.resolve({ 
+                members: trip.members || [], 
+                invites: [] // No pending invites in mock data
+            });
+        }
+        return Promise.resolve({ members: [], invites: [] });
+    }
+    
     return apiClient(`/trips/${tripId}/members`);
 };
 

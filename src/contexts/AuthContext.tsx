@@ -27,6 +27,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // On initial load, try to refresh the token to restore the session.
     // The refresh token is in a secure httpOnly cookie.
     const validateSession = async () => {
+        // Check if we're in development mode without backend
+        if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+            // Use mock user data for development
+            const mockUser: User = {
+                id: 'mock-user-1',
+                name: 'Demo User',
+                email: 'demo@sasgoapp.com',
+                preferences: {
+                    travelStyle: 'moderate',
+                    preferredCategories: ['sightseeing', 'food', 'culture'],
+                    budgetHistory: [
+                        { destination: 'Barcelona', budget: 1500 },
+                        { destination: 'Tokyo', budget: 2200 }
+                    ]
+                }
+            };
+            setUser(mockUser);
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const { accessToken } = await api.refreshToken();
             api.setAuthToken(accessToken);
@@ -44,12 +65,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+      // Use mock login for development
+      const mockUser: User = {
+        id: 'mock-user-1',
+        name: 'Demo User',
+        email: email,
+        preferences: {
+          travelStyle: 'moderate',
+          preferredCategories: ['sightseeing', 'food', 'culture'],
+          budgetHistory: [
+            { destination: 'Barcelona', budget: 1500 },
+            { destination: 'Tokyo', budget: 2200 }
+          ]
+        }
+      };
+      setUser(mockUser);
+      return;
+    }
+
     const { accessToken, user: loggedInUser } = await api.login(email, pass);
     api.setAuthToken(accessToken); // Store token in memory
     setUser(loggedInUser);
   };
   
   const register = async (name: string, email: string, pass: string) => {
+    // Check if we're in development mode without backend
+    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+      // Mock registration - just simulate success
+      return;
+    }
+
     await api.register(name, email, pass);
     // After successful registration, the user should be redirected to login.
   };

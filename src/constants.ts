@@ -113,21 +113,142 @@ export const MOCK_TRIPS: Trip[] = [
 export const MOCK_FULL_PACKING_LIST_V6: PackingList = {
     id: 'pl1',
     tripId: 'trip1',
-    title: 'Equipaje para Bariloche',
+    title: 'Equipaje para Bariloche - Generado por IA',
     items: [
-        { id: 'item1', name: 'Campera de nieve', qty: 1, category: 'ropa', packed: true, notes: 'La más abrigada' },
-        { id: 'item2', name: 'Buzo térmico', qty: 3, category: 'ropa', packed: true },
-        { id: 'item3', name: 'Pantalón de trekking', qty: 2, category: 'ropa', packed: false },
-        { id: 'item4', name: 'Botas de montaña', qty: 1, category: 'calzado', packed: true },
-        { id: 'item5', name: 'Pasaporte', qty: 1, category: 'documentos', packed: false, notes: 'Verificar vencimiento' },
-        { id: 'item6', name: 'Cargador portátil', qty: 1, category: 'electrónica', packed: true },
-        { id: 'item7', name: 'Cepillo de dientes', qty: 1, category: 'higiene', packed: false },
-        { id: 'item8', name: 'Guantes', qty: 2, category: 'ropa', packed: false },
-        { id: 'item9', name: 'Gorro', qty: 1, category: 'ropa', packed: false },
-        { id: 'item10', name: 'Anteojos de sol', qty: 1, category: 'otros', packed: true },
-        { id: 'item11', name: 'Ibuprofeno', qty: 1, category: 'salud', packed: false },
+        // Ítems indispensables (prioridad 1)
+        { id: 'item1', name: 'Campera de nieve', qty: 1, category: 'ropa', packed: true, notes: 'Requerida para clima frío en Bariloche', priority: 1, autoSuggested: true, weatherRelevant: true, relatedActivities: ['act1', 'act2'] },
+        { id: 'item4', name: 'Botas de montaña', qty: 1, category: 'calzado', packed: true, notes: 'Necesarias para trekking en Cerro Campanario', priority: 1, autoSuggested: true, relatedActivities: ['act2'] },
+        { id: 'item5', name: 'Pasaporte', qty: 1, category: 'documentos', packed: false, notes: 'Documento obligatorio - verificar vencimiento', priority: 1, autoSuggested: true },
+        { id: 'item6', name: 'Cargador de celular', qty: 1, category: 'electrónica', packed: true, notes: 'Indispensable para comunicación', priority: 1, autoSuggested: true },
+        { id: 'item7', name: 'Cepillo de dientes', qty: 1, category: 'higiene', packed: false, notes: 'Higiene personal básica', priority: 1, autoSuggested: true },
+        
+        // Ítems recomendados (prioridad 2)
+        { id: 'item2', name: 'Buzo térmico', qty: 3, category: 'ropa', packed: true, notes: 'Capas para clima variable - cantidad para 7 días', priority: 2, autoSuggested: true, weatherRelevant: true },
+        { id: 'item3', name: 'Pantalón de trekking', qty: 2, category: 'ropa', packed: false, notes: 'Cómodo para actividades al aire libre', priority: 2, autoSuggested: true, relatedActivities: ['act2'] },
+        { id: 'item8', name: 'Guantes térmicos', qty: 1, category: 'ropa', packed: false, notes: 'Protección de manos en clima frío', priority: 2, autoSuggested: true, weatherRelevant: true },
+        { id: 'item9', name: 'Gorro térmico', qty: 1, category: 'ropa', packed: false, notes: 'Evitar pérdida de calor corporal', priority: 2, autoSuggested: true, weatherRelevant: true },
+        { id: 'item10', name: 'Anteojos de sol', qty: 1, category: 'otros', packed: true, notes: 'Protección UV, especialmente en nieve', priority: 2, autoSuggested: true, relatedActivities: ['act2'] },
+        
+        // Ítems opcionales o específicos
+        { id: 'item11', name: 'Ibuprofeno', qty: 1, category: 'salud', packed: false, notes: 'Medicamento básico para emergencias', priority: 3, autoSuggested: false },
+        { id: 'item12', name: 'Cámara', qty: 1, category: 'electrónica', packed: false, notes: 'Para capturar paisajes de montaña', priority: 3, autoSuggested: true, relatedActivities: ['act2'] },
+        { id: 'item13', name: 'Protector solar', qty: 1, category: 'higiene', packed: false, notes: 'UV intenso en altura y nieve', priority: 1, autoSuggested: true, weatherRelevant: true, relatedActivities: ['act2'] },
+        { id: 'item14', name: 'Mochila de día', qty: 1, category: 'otros', packed: false, notes: 'Para excursiones y agua', priority: 2, autoSuggested: true, relatedActivities: ['act2'] }
     ]
 };
+
+export const MOCK_PACKING_LISTS: PackingList[] = [
+    MOCK_FULL_PACKING_LIST_V6,
+    {
+        id: 'pl2',
+        tripId: 'trip2',
+        title: 'Lista para la Costa',
+        items: [
+            { id: 'item21', name: 'Traje de baño', qty: 2, category: 'ropa', packed: true },
+            { id: 'item22', name: 'Protector solar', qty: 1, category: 'otros', packed: true },
+            { id: 'item23', name: 'Sandalias', qty: 1, category: 'calzado', packed: false },
+            { id: 'item24', name: 'Toalla de playa', qty: 2, category: 'otros', packed: true },
+            { id: 'item25', name: 'Shorts', qty: 4, category: 'ropa', packed: false },
+            { id: 'item26', name: 'Remeras', qty: 5, category: 'ropa', packed: true },
+            { id: 'item27', name: 'Gorra', qty: 1, category: 'otros', packed: false },
+        ]
+    },
+    {
+        id: 'pl3',
+        tripId: 'trip3',
+        title: 'Escapada urbana',
+        items: [
+            { id: 'item31', name: 'Zapatillas cómodas', qty: 1, category: 'calzado', packed: false },
+            { id: 'item32', name: 'Jeans', qty: 2, category: 'ropa', packed: true },
+            { id: 'item33', name: 'Cámara', qty: 1, category: 'electrónica', packed: false },
+            { id: 'item34', name: 'Tarjeta de crédito', qty: 1, category: 'documentos', packed: true },
+            { id: 'item35', name: 'Guía de la ciudad', qty: 1, category: 'otros', packed: false },
+        ]
+    }
+];
+
+export const MOCK_EXPENSES: Expense[] = [
+    {
+        id: 'exp1',
+        tripId: 'trip1',
+        description: 'Hotel Montaña Azul',
+        amount: 1200,
+        currency: 'ARS',
+        category: 'accommodation',
+        date: '2024-08-20',
+        paidBy: 'user1',
+        splitBetween: ['user1']
+    },
+    {
+        id: 'exp2',
+        tripId: 'trip1',
+        description: 'Cena en El Boliche de Alberto',
+        amount: 450,
+        currency: 'ARS',
+        category: 'food',
+        date: '2024-08-20',
+        paidBy: 'user1',
+        splitBetween: ['user1']
+    },
+    {
+        id: 'exp3',
+        tripId: 'trip2',
+        description: 'Apartamento frente al mar',
+        amount: 800,
+        currency: 'ARS',
+        category: 'accommodation',
+        date: '2024-07-15',
+        paidBy: 'user1',
+        splitBetween: ['user1', 'user2']
+    },
+    {
+        id: 'exp4',
+        tripId: 'trip2',
+        description: 'Almuerzo en el puerto',
+        amount: 320,
+        currency: 'ARS',
+        category: 'food',
+        date: '2024-07-16',
+        paidBy: 'user2',
+        splitBetween: ['user1', 'user2']
+    }
+];
+
+export const MOCK_RESERVATIONS: Reservation[] = [
+    {
+        id: 'res1',
+        tripId: 'trip1',
+        type: 'hotel',
+        title: 'Hotel Montaña Azul',
+        date: '2024-08-20',
+        time: '15:00',
+        details: 'Habitación doble con vista a la montaña',
+        confirmationCode: 'BAR123456',
+        status: 'confirmed'
+    },
+    {
+        id: 'res2',
+        tripId: 'trip1',
+        type: 'activity',
+        title: 'Excursión Cerro Campanario',
+        date: '2024-08-21',
+        time: '09:00',
+        details: 'Ascenso en aerosilla + almuerzo',
+        confirmationCode: 'ACT789012',
+        status: 'confirmed'
+    },
+    {
+        id: 'res3',
+        tripId: 'trip2',
+        type: 'hotel',
+        title: 'Apartamento Costa Azul',
+        date: '2024-07-15',
+        time: '14:00',
+        details: 'Apartamento 2 amb frente al mar',
+        confirmationCode: 'MDP345678',
+        status: 'confirmed'
+    }
+];
 
 export const MOCK_GEAR: Gear[] = [
     {

@@ -15,15 +15,8 @@ const CACHE_STRATEGIES = {
 const PRECACHE_RESOURCES = [
   '/',
   '/offline.html',
-  '/manifest.json',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  '/manifest.json'
+  // Icons will be cached when needed if they exist
 ];
 
 // Resources that should be cached with different strategies
@@ -128,6 +121,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Skip unsupported URL schemes
+  if (!url.protocol.startsWith('http') && !url.protocol.startsWith('https')) {
+    return;
+  }
 
   // Handle navigation requests
   if (request.mode === 'navigate') {
