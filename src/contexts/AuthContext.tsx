@@ -27,8 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // On initial load, try to refresh the token to restore the session.
     // The refresh token is in a secure httpOnly cookie.
     const validateSession = async () => {
-        // Check if we're in development mode without backend
-        if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
+        // Check if we're without backend (development or production)
+        if ((import.meta.env.DEV && !import.meta.env.VITE_API_URL) ||
+            (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL)) {
             // Use mock user data for development
             const mockUser: User = {
                 id: 'mock-user-1',

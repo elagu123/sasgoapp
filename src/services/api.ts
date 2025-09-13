@@ -20,10 +20,22 @@ export const getAuthToken = (): string | null => {
     return inMemoryAccessToken;
 };
 
+// Check if we're in production mode without backend
+const isProductionWithoutBackend = () => {
+    return import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL;
+};
+
 // Initialize CSRF token
 export const initializeCsrfToken = async (): Promise<void> => {
     if (csrfTokenInitialized) return;
-    
+
+    // Skip CSRF initialization if we're in production without backend
+    if (isProductionWithoutBackend()) {
+        console.log('Skipping CSRF token initialization - no backend available');
+        csrfTokenInitialized = true;
+        return;
+    }
+
     try {
         await fetch(`${API_BASE_URL}/auth/csrf-token`, {
             method: 'GET',
@@ -32,6 +44,8 @@ export const initializeCsrfToken = async (): Promise<void> => {
         csrfTokenInitialized = true;
     } catch (error) {
         console.error('Failed to initialize CSRF token:', error);
+        // Mark as initialized to prevent repeated attempts
+        csrfTokenInitialized = true;
     }
 };
 
@@ -125,6 +139,12 @@ export const register = async (name: string, email: string, password: string): P
 };
 
 export const refreshToken = async (): Promise<{ accessToken: string }> => {
+    // Skip refresh if we're in production without backend
+    if (isProductionWithoutBackend()) {
+        console.log('Skipping token refresh - no backend available');
+        throw new Error('No backend available');
+    }
+
     // The browser will automatically send the httpOnly refresh token cookie
     return apiClient('/auth/refresh', { method: 'POST' });
 };
