@@ -8,7 +8,11 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-    plugins: [react()],
+    plugins: [
+      react({
+        jsxRuntime: 'automatic'
+      })
+    ],
     define: {
       // Only expose specific environment variables that are safe for the frontend
       'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
