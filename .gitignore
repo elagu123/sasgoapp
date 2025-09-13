@@ -118,3 +118,4 @@ cookies*.txt
 backend/dev.db*
 backend/.env
 backend/.env.local
+.vercel

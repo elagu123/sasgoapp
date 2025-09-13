@@ -24,7 +24,9 @@
       "Bash(git pull:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(vercel:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

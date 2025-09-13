@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Se encarga de añadir el base URL, las cabeceras (como Authorization),
 // y de manejar las respuestas y errores de forma consistente.
 
-const API_BASE_URL = '/api'; // Usamos un proxy de Vite, o sería 'http://localhost:3001/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'; // Use environment variable or fallback to proxy
 
 let inMemoryAccessToken: string | null = null;
 let csrfTokenInitialized = false;
@@ -22,7 +22,8 @@ export const getAuthToken = (): string | null => {
 
 // Check if we're in production mode without backend
 const isProductionWithoutBackend = () => {
-    return import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL;
+    // Only use fallback mode during development
+    return false;
 };
 
 // Initialize CSRF token
@@ -125,6 +126,25 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
 // --- Auth API ---
 
 export const login = async (email: string, password: string): Promise<{ accessToken: string; user: User }> => {
+    // Skip login if we're in production without backend
+    if (isProductionWithoutBackend()) {
+        console.log('Skipping login - no backend available, using demo user');
+        const mockUser: User = {
+            id: 'demo-user-1',
+            name: 'Demo User',
+            email: email, // Use the provided email
+            preferences: {
+                travelStyle: 'moderate',
+                preferredCategories: ['sightseeing', 'food', 'culture'],
+                budgetHistory: []
+            }
+        };
+        return {
+            accessToken: 'demo-token',
+            user: mockUser
+        };
+    }
+
     return apiClient('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
@@ -132,6 +152,22 @@ export const login = async (email: string, password: string): Promise<{ accessTo
 };
 
 export const register = async (name: string, email: string, password: string): Promise<{ user: User }> => {
+    // Skip register if we're in production without backend
+    if (isProductionWithoutBackend()) {
+        console.log('Skipping register - no backend available, using demo user');
+        const mockUser: User = {
+            id: 'demo-user-' + Date.now(),
+            name: name,
+            email: email,
+            preferences: {
+                travelStyle: 'moderate',
+                preferredCategories: ['sightseeing', 'food', 'culture'],
+                budgetHistory: []
+            }
+        };
+        return { user: mockUser };
+    }
+
     return apiClient('/auth/register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password }),
@@ -162,29 +198,13 @@ export const getMe = async (): Promise<{ user: User }> => {
 // --- Trip API (Real Implementation) ---
 
 export const getTrips = async (): Promise<Trip[]> => {
-    // Check if we're in development mode without backend
-    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
-        // Use mock data for development
-        const { MOCK_TRIPS } = await import('../constants.ts');
-        return Promise.resolve(MOCK_TRIPS);
-    }
-    
-    return apiClient('/trips');
+    const response = await apiClient('/trips');
+    return response.trips || [];
 };
 
 export const getTrip = async (tripId: string): Promise<Trip> => {
-    // Check if we're in development mode without backend
-    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
-        // Use mock data for development
-        const { MOCK_TRIPS } = await import('../constants.ts');
-        const trip = MOCK_TRIPS.find(t => t.id === tripId);
-        if (trip) {
-            return Promise.resolve(trip);
-        }
-        throw new Error(`Trip with id ${tripId} not found`);
-    }
-    
-    return apiClient(`/trips/${tripId}`);
+    const response = await apiClient(`/trips/${tripId}`);
+    return response.trip;
 };
 
 export const createTrip = async (tripData: Partial<Omit<Trip, 'id'>>): Promise<Trip> => {
@@ -195,10 +215,11 @@ export const createTrip = async (tripData: Partial<Omit<Trip, 'id'>>): Promise<T
         endDate: tripData.dates?.end,
         budget: tripData.budget
     }
-    return apiClient('/trips', {
+    const response = await apiClient('/trips', {
         method: 'POST',
         body: JSON.stringify(payload),
     });
+    return response.trip;
 };
 
 export const updateTrip = async (tripId: string, tripData: Partial<Trip>): Promise<Trip> => {
@@ -210,10 +231,11 @@ export const updateTrip = async (tripId: string, tripData: Partial<Trip>): Promi
     };
     delete payload.dates; // Limpiamos el objeto anidado
 
-    return apiClient(`/trips/${tripId}`, {
+    const response = await apiClient(`/trips/${tripId}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
     });
+    return response.trip;
 };
 
 export const deleteTrip = async (tripId: string): Promise<void> => {
@@ -266,22 +288,16 @@ export const patchPackingList = async (packingId: string, op: PatchOp, payload: 
 // --- Expense API ---
 
 export const getExpenses = async (tripId: string): Promise<Expense[]> => {
-    // Check if we're in development mode without backend
-    if (import.meta.env.DEV && !import.meta.env.VITE_API_URL) {
-        // Use mock data for development
-        const { MOCK_EXPENSES } = await import('../constants.ts');
-        const expenses = MOCK_EXPENSES.filter(expense => expense.tripId === tripId);
-        return Promise.resolve(expenses);
-    }
-    
-    return apiClient(`/expenses?tripId=${tripId}`);
+    const response = await apiClient(`/trips/${tripId}/expenses`);
+    return response.expenses || [];
 };
 
 export const createExpense = async (expenseData: Omit<Expense, 'id'>): Promise<Expense> => {
-    return apiClient('/expenses', {
+    const response = await apiClient(`/trips/${expenseData.tripId}/expenses`, {
         method: 'POST',
         body: JSON.stringify(expenseData),
     });
+    return response.expense;
 };
 
 export const updateExpense = async (expenseId: string, expenseData: Partial<Expense>): Promise<Expense> => {
