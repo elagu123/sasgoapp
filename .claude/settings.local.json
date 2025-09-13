@@ -26,7 +26,9 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(vercel:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(gh repo view:*)",
+      "WebFetch(domain:sasgoapp.vercel.app)"
     ],
     "deny": [],
     "ask": []
