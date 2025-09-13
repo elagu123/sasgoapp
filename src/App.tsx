@@ -12,6 +12,9 @@ import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import OnboardingPage from './pages/OnboardingPage.tsx';
 import DashboardPage from './pages/DashboardPage.tsx';
+import DashboardPageEnhanced from './pages/DashboardPageEnhanced.tsx';
+import RevolutionaryPackingPage from './pages/RevolutionaryPackingPage.tsx';
+import EnhancedGetawayPage from './pages/EnhancedGetawayPage.tsx';
 import PackingDashboardPage from './pages/PackingDashboardPage.tsx';
 import NewPackingListPage from './pages/NewPackingListPage.tsx';
 import PackingListPage from './pages/PackingListPage.tsx';
@@ -33,6 +36,7 @@ const NewGearPage = React.lazy(() => import('./pages/NewGearPage.tsx'));
 const GearDetailPage = React.lazy(() => import('./pages/GearDetailPage.tsx'));
 const GetawayPlannerPage = React.lazy(() => import('./pages/GetawayPlannerPage.tsx'));
 const GetawayPlanPage = React.lazy(() => import('./pages/GetawayPlanPage.tsx'));
+const EnhancedTripTimelinePage = React.lazy(() => import('./pages/EnhancedTripTimelinePage.tsx'));
 
 
 const AppLayout: React.FC = () => {
@@ -92,10 +96,14 @@ function App() {
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard-v2" element={<DashboardPageEnhanced />} />
           <Route path="packing" element={<PackingDashboardPage />} />
           <Route path="packing/new" element={<NewPackingListPage />} />
           <Route path="packing/:id" element={<PackingListPage />} />
           <Route path="trips/:id" element={<TripOverviewPage />} />
+          <Route path="trips/:id/timeline" element={<EnhancedTripTimelinePage />} />
+          <Route path="trips/:tripId/packing-v2" element={<RevolutionaryPackingPage />} />
+          <Route path="getaway-v2" element={<EnhancedGetawayPage />} />
           <Route path="trips/:id/saver" element={<SmartSaverPage />} />
           <Route path="gear" element={<GearDashboardPage />} />
           <Route path="gear/new" element={<NewGearPage />} />

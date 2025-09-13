@@ -110,3 +110,11 @@ lib-cov
 
 # Test files temporales
 test-security-fixes.js
+
+# Cookies de testing 
+cookies*.txt
+
+# Backend database
+backend/dev.db*
+backend/.env
+backend/.env.local

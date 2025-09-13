@@ -10,15 +10,18 @@ import { uploadTripImage } from '../services/api.ts';
 import { DashboardSkeleton } from '../components/dashboard/Skeletons.tsx';
 import KpiCard from '../components/dashboard/KpiCard.tsx';
 import TripCard from '../components/dashboard/TripCard.tsx';
+import EnhancedTripCard from '../components/dashboard/EnhancedTripCard.tsx';
 import QuickFiltersBar from '../components/dashboard/QuickFiltersBar.tsx';
 import TripFormDialog from '../components/TripFormDialog.tsx';
 import ConflictDialog from '../components/ConflictDialog.tsx';
 import type { Trip } from '../types.ts';
 import AiRecommendations from '../components/dashboard/AiRecommendations.tsx';
 import GetawayPlannerCta from '../components/dashboard/GetawayPlannerCta.tsx';
+import EnhancedDashboard from '../components/dashboard/EnhancedDashboard.tsx';
 
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
+    const [useEnhancedDashboard, setUseEnhancedDashboard] = useState(true); // Toggle para probar ambas versiones
     const [filterState, setFilterState] = useState(dashboardFilterStore.getState());
     const [isFormOpen, setFormOpen] = useState(false);
     const [editingTrip, setEditingTrip] = useState<Trip | null>(null);

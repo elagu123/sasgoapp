@@ -20,7 +20,11 @@
       "Bash(echo:*)",
       "Bash(DATABASE_URL=\"file:./test.db\" npx prisma db push)",
       "Bash(npx vite build:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git pull:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

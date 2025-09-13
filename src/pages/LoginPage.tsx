@@ -7,7 +7,7 @@ import { useToast } from '../hooks/useToast.ts';
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const { addToast } = useToast();
     const [email, setEmail] = useState('viajero@sasgo.com');
     const [password, setPassword] = useState('password123');
@@ -19,20 +19,24 @@ const LoginPage: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const userData = await login(email, password);
+            await login(email, password);
             addToast('¡Bienvenido de nuevo!', 'success');
             
-            // Check if user needs onboarding
-            const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${userData.id}`);
-            const hasPreferences = userData.preferences && 
-                userData.preferences.travelStyle && 
-                userData.preferences.preferredCategories.length > 0;
+            // Check if user needs onboarding after login
+            // Note: user state might not be updated immediately, so we'll use a timeout
+            setTimeout(() => {
+                const currentUser = user;
+                const hasCompletedOnboarding = currentUser ? localStorage.getItem(`onboarding-completed-${currentUser.id}`) : null;
+                const hasPreferences = currentUser?.preferences && 
+                    currentUser.preferences.travelStyle && 
+                    currentUser.preferences.preferredCategories.length > 0;
 
-            if (!hasCompletedOnboarding && !hasPreferences) {
-                navigate('/onboarding', { replace: true });
-            } else {
-                navigate(from, { replace: true });
-            }
+                if (!hasCompletedOnboarding && !hasPreferences) {
+                    navigate('/onboarding', { replace: true });
+                } else {
+                    navigate(from, { replace: true });
+                }
+            }, 100);
         } catch (error: any) {
             addToast(error.message || 'Credenciales inválidas. Por favor, intenta de nuevo.', 'error');
             console.error(error);

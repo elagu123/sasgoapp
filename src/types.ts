@@ -91,14 +91,17 @@ export interface Trip {
     id: string;
     userId: string;
     title: string;
-    destination: string[];
-    dates: {
-        start: string; // YYYY-MM-DD
-        end: string;   // YYYY-MM-DD
+    destination: string | string[]; // Support both single destination and array
+    startDate: string; // YYYY-MM-DD for compatibility
+    endDate: string;   // YYYY-MM-DD for compatibility
+    dates?: {
+        start: string; // YYYY-MM-DD - backward compatibility
+        end: string;   // YYYY-MM-DD - backward compatibility
     };
     travelers: number;
     pace: 'relaxed' | 'moderate' | 'intense';
     budget: number; // In whole currency units, e.g., dollars
+    spentBudget?: number; // Amount already spent
     interests: string[];
     createdAt: string; // ISO 8601
     members: TripMember[];
@@ -119,7 +122,31 @@ export interface Trip {
         packed: number;
     };
     imageUrl?: string;
+    image?: string; // Alternative naming for Enhanced components
     selectedAccommodationId?: string;
+    
+    // Enhanced Dashboard properties
+    country?: string; // For flag display
+    isFavorite?: boolean;
+    isArchived?: boolean;
+    
+    // Progress tracking for enhanced cards
+    itineraryProgress?: number; // Percentage (0-100)
+    bookingProgress?: number; // Percentage (0-100)
+    documentsProgress?: number; // Percentage (0-100)
+    
+    // Status tracking
+    status?: 'planning' | 'ready' | 'ongoing' | 'completed';
+    
+    // Smart alerts
+    alerts?: {
+        id: string;
+        type: 'weather' | 'visa' | 'vaccination' | 'booking' | 'packing';
+        message: string;
+        priority: 'high' | 'medium' | 'low';
+        actionable: boolean;
+        link?: string;
+    }[];
 }
 
 export type PackingCategory = 'ropa' | 'calzado' | 'higiene' | 'electrónica' | 'documentos' | 'salud' | 'bebé' | 'trabajo' | 'otros';
