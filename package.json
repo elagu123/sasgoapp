@@ -13,7 +13,8 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "deploy:check": "npm run build:prod && npm run test",
-    "deploy:vercel": "npm run build:prod"
+    "deploy:vercel": "npm run build:prod",
+    "vercel-build": "npm run build:prod"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
