@@ -6,17 +6,26 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ command, mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
-  
+
   return {
     plugins: [
       react({
-        jsxRuntime: 'automatic'
+        jsxRuntime: 'automatic',
+        jsxImportSource: 'react'
       })
     ],
+    mode: mode === 'production' ? 'production' : mode,
     define: {
-      // Only expose specific environment variables that are safe for the frontend
+      // Force production build
+      'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : mode),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
-      'process.env.NODE_ENV': JSON.stringify(mode)
+      __DEV__: mode !== 'production'
+    },
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
+      minifyIdentifiers: mode === 'production',
+      minifySyntax: mode === 'production',
+      minifyWhitespace: mode === 'production'
     },
     server: {
       proxy: {

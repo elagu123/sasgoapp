@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:prod": "vite build --mode production",
+    "build:prod": "cross-env NODE_ENV=production vite build --mode production",
     "build:ts": "tsc && vite build",
     "preview": "vite preview",
     "preview:prod": "vite preview --mode production",
@@ -53,6 +53,7 @@
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
+    "cross-env": "^10.0.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
