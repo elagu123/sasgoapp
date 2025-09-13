@@ -69,6 +69,26 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api', csrfProtection); // Aplicar protección CSRF a todas las rutas de /api
 app.use('/api', apiRouter);
 
+// --- Ruta raíz simple para evitar 404 ---
+app.get('/', (req, res) => {
+  res.json({
+    name: 'SASGOAPP Backend API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/monitoring/health',
+      trips: '/api/trips',
+      auth: '/api/auth',
+      bookings: '/api/bookings'
+    },
+    documentation: 'https://github.com/elagu123/sasgoapp'
+  });
+});
+
+// --- Rutas para evitar 404s del navegador ---
+app.get('/favicon.ico', (req, res) => res.status(204).send());
+app.get('/.well-known/*', (req, res) => res.status(404).json({ error: 'Not found' }));
+
 // --- Manejo de Errores ---
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   // Log error details for debugging (server-side only)
