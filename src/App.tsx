@@ -28,6 +28,7 @@ import { useSyncQueue } from './hooks/useSyncQueue.ts';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import { notificationService } from './services/notificationService.ts';
 import PWAInstallBanner from './components/pwa/PWAInstallBanner.tsx';
+import { DemoBanner } from './components/common/DemoBanner.tsx';
 
 // --- Lazy Loaded Pages ---
 const SmartSaverPage = React.lazy(() => import('./pages/SmartSaverPage.tsx'));

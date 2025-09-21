@@ -28,7 +28,10 @@
       "Bash(vercel:*)",
       "WebSearch",
       "Bash(gh repo view:*)",
-      "WebFetch(domain:sasgoapp.vercel.app)"
+      "WebFetch(domain:sasgoapp.vercel.app)",
+      "Bash(timeout:*)",
+      "Bash(npx lighthouse:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

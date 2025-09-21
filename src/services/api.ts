@@ -22,8 +22,8 @@ export const getAuthToken = (): string | null => {
 
 // Check if we're in production mode without backend
 const isProductionWithoutBackend = () => {
-    // Only use fallback mode during development
-    return false;
+    // For now, use demo mode in production until serverless functions are working
+    return import.meta.env.PROD;
 };
 
 // Initialize CSRF token

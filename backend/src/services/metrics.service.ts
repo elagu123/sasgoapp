@@ -6,6 +6,8 @@
 import { register, collectDefaultMetrics, Counter, Histogram, Gauge, Summary } from 'prom-client';
 
 export class MetricsService {
+  private static instance: MetricsService | null = null;
+
   // HTTP request metrics
   private httpRequestsTotal: Counter<string>;
   private httpRequestDuration: Histogram<string>;
@@ -47,12 +49,19 @@ export class MetricsService {
   private websocketMessages: Counter<string>;
 
   constructor() {
+    // Clear registry in test environment to avoid duplicate registration
+    if (process.env.NODE_ENV === 'test') {
+      register.clear();
+    }
+
     // Enable default metrics collection (CPU, memory, etc.)
     collectDefaultMetrics({
       register,
       prefix: 'sasgoapp_',
       gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5]
     });
+
+    MetricsService.instance = this;
 
     this.initializeHttpMetrics();
     this.initializeDatabaseMetrics();

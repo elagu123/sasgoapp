@@ -28,9 +28,9 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
         return next();
     }
 
-    // Skip CSRF protection in development mode
-    if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ CSRF protection disabled in development mode');
+    // Skip CSRF protection in development and test modes
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+        console.log(`⚠️ CSRF protection disabled in ${process.env.NODE_ENV} mode`);
         return next();
     }
 

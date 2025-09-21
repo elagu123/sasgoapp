@@ -87,6 +87,8 @@ const mockGeolocation = {
 }
 Object.defineProperty(navigator, 'geolocation', {
   value: mockGeolocation,
+  writable: true,
+  configurable: true,
 })
 
 // Mock Notification API
@@ -97,6 +99,8 @@ mockNotification.permission = 'granted'
 mockNotification.requestPermission = vi.fn().mockResolvedValue('granted')
 Object.defineProperty(window, 'Notification', {
   value: mockNotification,
+  writable: true,
+  configurable: true,
 })
 
 // Mock WebSocket

@@ -1,5 +1,4 @@
-// FIX: Import Jest globals to resolve TypeScript errors.
-import { describe, it, expect, beforeEach, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 // Archivo: tests/auth.test.ts
 // Propósito: Pruebas de integración para los endpoints de autenticación.
 
@@ -73,7 +72,7 @@ describe('Auth API', () => {
         expect(res.body).toHaveProperty('accessToken');
         expect(res.body.user.email).toBe(testUser.email);
         expect(res.headers['set-cookie']).toBeDefined();
-        expect(res.headers['set-cookie'][0]).toContain('refreshToken');
+        expect(res.headers['set-cookie'].some((cookie: string) => cookie.includes('refreshToken'))).toBe(true);
     });
 
     it('should return 401 for wrong password', async () => {

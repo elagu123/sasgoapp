@@ -1,7 +1,6 @@
 // Archivo: tests/trip.test.ts
 // Propósito: Pruebas de integración para los endpoints de viajes.
-// FIX: Import Jest globals to resolve TypeScript errors.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../src/index';
 import prisma from '../src/lib/prisma';
