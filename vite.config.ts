@@ -9,10 +9,7 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [
-      react({
-        jsxRuntime: 'automatic',
-        jsxImportSource: 'react'
-      })
+      react()
     ],
     mode: mode === 'production' ? 'production' : mode,
     define: {
