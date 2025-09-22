@@ -32,7 +32,8 @@
       "Bash(timeout:*)",
       "Bash(npx lighthouse:*)",
       "Bash(npm test:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []
