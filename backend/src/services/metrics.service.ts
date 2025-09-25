@@ -9,44 +9,44 @@ export class MetricsService {
   private static instance: MetricsService | null = null;
 
   // HTTP request metrics
-  private httpRequestsTotal: Counter<string>;
-  private httpRequestDuration: Histogram<string>;
-  private httpRequestSizeBytes: Histogram<string>;
-  private httpResponseSizeBytes: Histogram<string>;
+  private httpRequestsTotal!: Counter<string>;
+  private httpRequestDuration!: Histogram<string>;
+  private httpRequestSizeBytes!: Histogram<string>;
+  private httpResponseSizeBytes!: Histogram<string>;
 
   // Database metrics
-  private dbQueriesTotal: Counter<string>;
-  private dbQueryDuration: Histogram<string>;
-  private dbConnectionsActive: Gauge<string>;
-  private dbConnectionsIdle: Gauge<string>;
+  private dbQueriesTotal!: Counter<string>;
+  private dbQueryDuration!: Histogram<string>;
+  private dbConnectionsActive!: Gauge<string>;
+  private dbConnectionsIdle!: Gauge<string>;
 
   // Cache metrics
-  private cacheOperationsTotal: Counter<string>;
-  private cacheHitRate: Gauge<string>;
-  private cacheMemoryUsage: Gauge<string>;
-  private cacheConnectionsActive: Gauge<string>;
+  private cacheOperationsTotal!: Counter<string>;
+  private cacheHitRate!: Gauge<string>;
+  private cacheMemoryUsage!: Gauge<string>;
+  private cacheConnectionsActive!: Gauge<string>;
 
   // Business metrics
-  private tripsCreated: Counter<string>;
-  private tripsShared: Counter<string>;
-  private expensesAdded: Counter<string>;
-  private userRegistrations: Counter<string>;
-  private userLogins: Counter<string>;
+  private tripsCreated!: Counter<string>;
+  private tripsShared!: Counter<string>;
+  private expensesAdded!: Counter<string>;
+  private userRegistrations!: Counter<string>;
+  private userLogins!: Counter<string>;
 
   // System metrics
-  private memoryUsage: Gauge<string>;
-  private cpuUsage: Gauge<string>;
-  private diskUsage: Gauge<string>;
-  private uptime: Gauge<string>;
+  private memoryUsage!: Gauge<string>;
+  private cpuUsage!: Gauge<string>;
+  private diskUsage!: Gauge<string>;
+  private uptime!: Gauge<string>;
 
   // Error metrics
-  private errorsTotal: Counter<string>;
-  private errorsByEndpoint: Counter<string>;
-  private criticalErrors: Counter<string>;
+  private errorsTotal!: Counter<string>;
+  private errorsByEndpoint!: Counter<string>;
+  private criticalErrors!: Counter<string>;
 
   // WebSocket metrics
-  private websocketConnections: Gauge<string>;
-  private websocketMessages: Counter<string>;
+  private websocketConnections!: Gauge<string>;
+  private websocketMessages!: Counter<string>;
 
   constructor() {
     // Clear registry in test environment to avoid duplicate registration

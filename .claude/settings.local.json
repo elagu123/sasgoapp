@@ -33,7 +33,11 @@
       "Bash(npx lighthouse:*)",
       "Bash(npm test:*)",
       "Bash(npx vercel:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npm outdated)",
+      "Bash(npm audit:*)",
+      "Bash(npm update:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

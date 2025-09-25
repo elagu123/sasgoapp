@@ -3,6 +3,7 @@ import type { PackingList, Trip, ItineraryDay, UserProfile, EventSuggestion, Iti
 import { v4 as uuidv4 } from 'uuid';
 import { toMin, fromMin } from '../lib/itinerary-time.ts';
 import { MOCK_GETAWAY_CANDIDATES, MOCK_FULL_GETAWAY_PLAN, MOCK_PUBLIC_TRIPS, MOCK_STAY_CANDIDATES, MOCK_WEATHER_FORECAST, MOCK_ACTIVITY_CANDIDATES, MOCK_PARSED_TICKET } from '../constants.ts';
+import { weatherService } from './weatherService.ts';
 
 // Initialize ai only if API_KEY is available to prevent crashes.
 const ai = process.env.API_KEY || import.meta.env.VITE_GEMINI_API_KEY ? 
@@ -553,9 +554,7 @@ export const getWeatherForecast = async (
     startDate: string,
     endDate: string
 ): Promise<WeatherForecastDay[]> => {
-    // Import weather service dynamically to avoid circular dependencies
-    const { weatherService } = await import('./weatherService.ts');
-    
+    // Use weather service directly
     try {
         return await weatherService.getWeatherForecast(destination, startDate, endDate);
     } catch (error) {

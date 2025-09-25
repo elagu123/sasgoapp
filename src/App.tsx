@@ -7,21 +7,24 @@ import ProtectedRoute from './components/ProtectedRoute.tsx';
 import Header from './components/Header.tsx';
 import AiCopilot from './components/AiCopilot.tsx';
 
+// Core pages (loaded immediately)
 import HomePage from './pages/HomePage.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
-import OnboardingPage from './pages/OnboardingPage.tsx';
-import DashboardPage from './pages/DashboardPage.tsx';
-import DashboardPageEnhanced from './pages/DashboardPageEnhanced.tsx';
-import RevolutionaryPackingPage from './pages/RevolutionaryPackingPage.tsx';
-import EnhancedGetawayPage from './pages/EnhancedGetawayPage.tsx';
-import PackingDashboardPage from './pages/PackingDashboardPage.tsx';
-import NewPackingListPage from './pages/NewPackingListPage.tsx';
-import PackingListPage from './pages/PackingListPage.tsx';
-import TripOverviewPage from './pages/TripOverviewPage.tsx';
-import ProfilePage from './pages/ProfilePage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
-import LostFoundPublicPage from './pages/LostFoundPublicPage.tsx';
+
+// Lazy-loaded pages (loaded on demand)
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage.tsx'));
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage.tsx'));
+const DashboardPageEnhanced = React.lazy(() => import('./pages/DashboardPageEnhanced.tsx'));
+const RevolutionaryPackingPage = React.lazy(() => import('./pages/RevolutionaryPackingPage.tsx'));
+const EnhancedGetawayPage = React.lazy(() => import('./pages/EnhancedGetawayPage.tsx'));
+const PackingDashboardPage = React.lazy(() => import('./pages/PackingDashboardPage.tsx'));
+const NewPackingListPage = React.lazy(() => import('./pages/NewPackingListPage.tsx'));
+const PackingListPage = React.lazy(() => import('./pages/PackingListPage.tsx'));
+const TripOverviewPage = React.lazy(() => import('./pages/TripOverviewPage.tsx'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage.tsx'));
+const LostFoundPublicPage = React.lazy(() => import('./pages/LostFoundPublicPage.tsx'));
 import { getTrips } from './services/api.ts';
 import { NOTIFICATIONS_STORAGE_KEY } from './constants.ts';
 import { useSyncQueue } from './hooks/useSyncQueue.ts';
@@ -87,7 +90,15 @@ function App() {
   return (
     <ErrorBoundary>
       <PWAInstallBanner />
-      <Routes>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300">Cargando aplicación...</p>
+          </div>
+        </div>
+      }>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -116,6 +127,7 @@ function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
     </ErrorBoundary>
   );
 }

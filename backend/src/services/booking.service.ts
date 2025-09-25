@@ -238,7 +238,7 @@ export class BookingService {
     filters?: BookingSearchFilters
   ): Promise<any[]> {
     const cacheKey = `hotels:search:${location}:${checkIn.toISOString()}:${checkOut.toISOString()}:${guests}`;
-    const cached = await this.cache.get<any[]>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as any[];
     
     if (cached) {
       this.metrics.incrementCounter('booking_cache_hits');
@@ -277,7 +277,7 @@ export class BookingService {
 
   async getHotelQuote(hotelId: string, checkIn: Date, checkOut: Date, guests: number): Promise<BookingQuote> {
     const cacheKey = `hotel:quote:${hotelId}:${checkIn.toISOString()}:${checkOut.toISOString()}:${guests}`;
-    const cached = await this.cache.get<BookingQuote>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as BookingQuote;
     
     if (cached) {
       return cached;
@@ -380,7 +380,7 @@ export class BookingService {
     flightClass: 'economy' | 'business' | 'first' = 'economy'
   ): Promise<any[]> {
     const cacheKey = `flights:search:${origin}:${destination}:${departureDate.toISOString()}:${returnDate?.toISOString() || 'oneway'}:${passengers}:${flightClass}`;
-    const cached = await this.cache.get<any[]>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as any[];
     
     if (cached) {
       this.metrics.incrementCounter('booking_cache_hits');
@@ -482,7 +482,7 @@ export class BookingService {
     filters?: BookingSearchFilters
   ): Promise<any[]> {
     const cacheKey = `activities:search:${location}:${date?.toISOString() || 'any'}:${category || 'all'}`;
-    const cached = await this.cache.get<any[]>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as any[];
     
     if (cached) {
       this.metrics.incrementCounter('booking_cache_hits');
@@ -560,7 +560,7 @@ export class BookingService {
     activities: ActivityBooking[];
   }> {
     const cacheKey = `bookings:user:${userId}${tripId ? `:trip:${tripId}` : ''}`;
-    const cached = await this.cache.get<any>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as any;
     
     if (cached) {
       return cached;

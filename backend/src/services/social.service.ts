@@ -1,7 +1,7 @@
 import { CacheService } from './cache.service';
 import { LoggingService } from './logging.service';
 import { MetricsService } from './metrics.service';
-import { DatabaseService } from './database.service';
+import { PrismaClient } from '@prisma/client';
 
 export interface UserProfile {
   id: string;
@@ -147,13 +147,13 @@ export class SocialService {
   private cache: CacheService;
   private logger: LoggingService;
   private metrics: MetricsService;
-  private database: DatabaseService;
+  private prisma: PrismaClient;
 
   constructor() {
-    this.cache = CacheService.getInstance();
-    this.logger = LoggingService.getInstance();
-    this.metrics = MetricsService.getInstance();
-    this.database = DatabaseService.getInstance();
+    this.cache = new CacheService();
+    this.logger = new LoggingService();
+    this.metrics = new MetricsService();
+    this.prisma = new PrismaClient();
   }
 
   // User Profile Management
@@ -177,7 +177,7 @@ export class SocialService {
       
       return profile;
     } catch (error) {
-      this.logger.logError('Failed to fetch user profile', error as Error, { userId });
+      this.logger.error(`Failed to fetch user profile for ${userId}:`, error as Error);
       return null;
     }
   }
@@ -188,17 +188,17 @@ export class SocialService {
       const updatedProfile = await this.updateUserProfileInDB(userId, updates);
       
       // Invalidate cache
-      await this.cache.delete(`profile:${userId}`);
+      await this.cache.del(`profile:${userId}`);
       
       // Update related caches
       await this.invalidateUserRelatedCaches(userId);
       
       this.metrics.incrementCounter('social_profile_updates');
-      this.logger.logInfo('User profile updated', { userId, updates: Object.keys(updates) });
+      this.logger.info('User profile updated', { userId, updates: Object.keys(updates) });
       
       return updatedProfile;
     } catch (error) {
-      this.logger.logError('Failed to update user profile', error as Error, { userId });
+      this.logger.error(`Failed to update user profile for ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -231,7 +231,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('User search failed', error as Error, { query, filters });
+      this.logger.error(`User search failed for query ${query}:`, error as Error);
       throw error;
     }
   }
@@ -249,11 +249,11 @@ export class SocialService {
       await this.notifyFollowersOfNewPost(userId, post.id);
       
       this.metrics.incrementCounter('social_posts_created');
-      this.logger.logInfo('Post created', { userId, postId: post.id });
+      this.logger.info('Post created', { userId, postId: post.id });
       
       return post;
     } catch (error) {
-      this.logger.logError('Failed to create post', error as Error, { userId });
+      this.logger.error(`Failed to create post for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -279,7 +279,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch user posts', error as Error, { userId, viewerId });
+      this.logger.error(`Failed to fetch posts for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -307,7 +307,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to generate feed', error as Error, { userId });
+      this.logger.error(`Failed to generate feed for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -318,7 +318,7 @@ export class SocialService {
       
       if (success) {
         // Invalidate post cache
-        await this.cache.delete(`post:${postId}`);
+        await this.cache.del(`post:${postId}`);
         
         // Create notification
         const post = await this.getPostById(postId);
@@ -339,7 +339,7 @@ export class SocialService {
       
       return success;
     } catch (error) {
-      this.logger.logError('Failed to like post', error as Error, { userId, postId });
+      this.logger.error(`Failed to like post ${postId}:`, error as Error);
       return false;
     }
   }
@@ -349,13 +349,13 @@ export class SocialService {
       const success = await this.unlikePostInDB(userId, postId);
       
       if (success) {
-        await this.cache.delete(`post:${postId}`);
+        await this.cache.del(`post:${postId}`);
         this.metrics.incrementCounter('social_post_unlikes');
       }
       
       return success;
     } catch (error) {
-      this.logger.logError('Failed to unlike post', error as Error, { userId, postId });
+      this.logger.error(`Failed to unlike post ${postId}:`, error as Error);
       return false;
     }
   }
@@ -366,8 +366,8 @@ export class SocialService {
       const comment = await this.addCommentInDB(userId, postId, content, parentId);
       
       // Invalidate post cache
-      await this.cache.delete(`post:${postId}`);
-      await this.cache.deletePattern(`comments:post:${postId}:*`);
+      await this.cache.del(`post:${postId}`);
+      await this.cache.delPattern(`comments:post:${postId}:*`);
       
       // Create notification
       const post = await this.getPostById(postId);
@@ -384,11 +384,11 @@ export class SocialService {
       }
       
       this.metrics.incrementCounter('social_comments_created');
-      this.logger.logInfo('Comment added', { userId, postId, commentId: comment.id });
+      this.logger.info('Comment added', { userId, postId, commentId: comment.id });
       
       return comment;
     } catch (error) {
-      this.logger.logError('Failed to add comment', error as Error, { userId, postId });
+      this.logger.error(`Failed to add comment to post ${postId}:`, error as Error);
       throw error;
     }
   }
@@ -413,7 +413,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch comments', error as Error, { postId });
+      this.logger.error(`Failed to fetch comments for post ${postId}:`, error as Error);
       throw error;
     }
   }
@@ -447,7 +447,7 @@ export class SocialService {
       
       return success;
     } catch (error) {
-      this.logger.logError('Failed to follow user', error as Error, { followerId, followingId });
+      this.logger.error(`Failed to follow user ${followingId}:`, error as Error);
       return false;
     }
   }
@@ -463,7 +463,7 @@ export class SocialService {
       
       return success;
     } catch (error) {
-      this.logger.logError('Failed to unfollow user', error as Error, { followerId, followingId });
+      this.logger.error(`Failed to unfollow user ${followingId}:`, error as Error);
       return false;
     }
   }
@@ -488,7 +488,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch followers', error as Error, { userId });
+      this.logger.error(`Failed to fetch followers for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -513,7 +513,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch following', error as Error, { userId });
+      this.logger.error(`Failed to fetch following for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -530,11 +530,11 @@ export class SocialService {
       await this.joinCommunity(userId, community.id, 'admin');
       
       this.metrics.incrementCounter('social_communities_created');
-      this.logger.logInfo('Community created', { userId, communityId: community.id });
+      this.logger.info('Community created', { userId, communityId: community.id });
       
       return community;
     } catch (error) {
-      this.logger.logError('Failed to create community', error as Error, { userId });
+      this.logger.error(`Failed to create community for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -545,15 +545,15 @@ export class SocialService {
       
       if (success) {
         // Invalidate community caches
-        await this.cache.deletePattern(`community:${communityId}:*`);
-        await this.cache.deletePattern(`user_communities:${userId}:*`);
+        await this.cache.delPattern(`community:${communityId}:*`);
+        await this.cache.delPattern(`user_communities:${userId}:*`);
         
         this.metrics.incrementCounter('social_community_joins');
       }
       
       return success;
     } catch (error) {
-      this.logger.logError('Failed to join community', error as Error, { userId, communityId });
+      this.logger.error(`Failed to join community ${communityId}:`, error as Error);
       return false;
     }
   }
@@ -578,7 +578,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch user communities', error as Error, { userId });
+      this.logger.error(`Failed to fetch communities for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -607,7 +607,7 @@ export class SocialService {
       
       return recommendation;
     } catch (error) {
-      this.logger.logError('Failed to create recommendation', error as Error, { fromUserId, toUserId });
+      this.logger.error(`Failed to create recommendation from ${fromUserId} to ${toUserId}:`, error as Error);
       throw error;
     }
   }
@@ -618,11 +618,11 @@ export class SocialService {
       const notification = await this.createNotificationInDB(notificationData);
       
       // Invalidate user notifications cache
-      await this.cache.deletePattern(`notifications:${notificationData.userId}:*`);
+      await this.cache.delPattern(`notifications:${notificationData.userId}:*`);
       
       return notification;
     } catch (error) {
-      this.logger.logError('Failed to create notification', error as Error, notificationData);
+      this.logger.error(`Failed to create notification for user ${notificationData.userId}:`, error as Error);
       throw error;
     }
   }
@@ -648,7 +648,7 @@ export class SocialService {
       
       return results;
     } catch (error) {
-      this.logger.logError('Failed to fetch notifications', error as Error, { userId });
+      this.logger.error(`Failed to fetch notifications for user ${userId}:`, error as Error);
       throw error;
     }
   }
@@ -764,23 +764,23 @@ export class SocialService {
   }
 
   private async invalidateUserRelatedCaches(userId: string): Promise<void> {
-    await this.cache.deletePattern(`posts:user:${userId}:*`);
-    await this.cache.deletePattern(`followers:${userId}:*`);
-    await this.cache.deletePattern(`following:${userId}:*`);
+    await this.cache.delPattern(`posts:user:${userId}:*`);
+    await this.cache.delPattern(`followers:${userId}:*`);
+    await this.cache.delPattern(`following:${userId}:*`);
   }
 
   private async invalidateUserPostsCaches(userId: string): Promise<void> {
-    await this.cache.deletePattern(`posts:user:${userId}:*`);
+    await this.cache.delPattern(`posts:user:${userId}:*`);
   }
 
   private async invalidateFeedCaches(): Promise<void> {
-    await this.cache.deletePattern(`feed:*`);
+    await this.cache.delPattern(`feed:*`);
   }
 
   private async invalidateFollowCaches(followerId: string, followingId: string): Promise<void> {
-    await this.cache.deletePattern(`followers:${followingId}:*`);
-    await this.cache.deletePattern(`following:${followerId}:*`);
-    await this.cache.deletePattern(`feed:${followerId}:*`);
+    await this.cache.delPattern(`followers:${followingId}:*`);
+    await this.cache.delPattern(`following:${followerId}:*`);
+    await this.cache.delPattern(`feed:${followerId}:*`);
   }
 }
 

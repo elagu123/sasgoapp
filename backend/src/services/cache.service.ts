@@ -12,8 +12,6 @@ export interface CacheConfig {
   password?: string;
   db?: number;
   keyPrefix?: string;
-  retryDelayOnFailover?: number;
-  enableReadyCheck?: boolean;
   maxRetriesPerRequest?: number;
 }
 
@@ -28,8 +26,6 @@ export class CacheService {
       password: process.env.REDIS_PASSWORD,
       db: parseInt(process.env.REDIS_DB || '0'),
       keyPrefix: 'sasgoapp:',
-      retryDelayOnFailover: 100,
-      enableReadyCheck: true,
       maxRetriesPerRequest: 3
     };
 
@@ -41,8 +37,6 @@ export class CacheService {
       password: finalConfig.password,
       db: finalConfig.db,
       keyPrefix: finalConfig.keyPrefix,
-      retryDelayOnFailover: finalConfig.retryDelayOnFailover,
-      enableReadyCheck: finalConfig.enableReadyCheck,
       maxRetriesPerRequest: finalConfig.maxRetriesPerRequest,
       lazyConnect: true
     });
@@ -246,6 +240,11 @@ export class CacheService {
       console.error(`Rate limit error for key ${key}:`, error);
       return { count: 0, resetTime: Date.now() + windowSize * 1000, allowed: true };
     }
+  }
+
+  // Alias for backward compatibility
+  async delPattern(pattern: string): Promise<number> {
+    return this.invalidatePattern(pattern);
   }
 
   // Health check

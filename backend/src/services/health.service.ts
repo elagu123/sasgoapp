@@ -197,7 +197,7 @@ export class HealthService {
         message = 'Cache response is very slow';
       }
 
-      if (!retrieved || retrieved.timestamp !== testValue.timestamp) {
+      if (!retrieved || (retrieved as any).timestamp !== testValue.timestamp) {
         status = 'degraded';
         message = 'Cache operations are not functioning correctly';
       }
