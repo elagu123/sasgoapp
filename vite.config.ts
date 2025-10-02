@@ -9,16 +9,11 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [
-      react({
-        jsxRuntime: 'automatic'
-      })
+      react()
     ],
-    mode: mode === 'production' ? 'production' : mode,
     define: {
-      // Force production build
       'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : mode),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
-      __DEV__: mode !== 'production'
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY)
     },
     esbuild: {
       drop: mode === 'production' ? ['console', 'debugger'] : [],

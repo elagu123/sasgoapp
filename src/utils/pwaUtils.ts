@@ -38,9 +38,13 @@ class PWAManager {
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e) => {
       console.log('[PWA] Before install prompt triggered');
-      e.preventDefault();
-      this.deferredPrompt = e as BeforeInstallPromptEvent;
-      this.notifyInstallCallbacks(true);
+      // Only prevent default if we want to show custom UI
+      // Don't prevent if we're not going to show the prompt
+      if (!this.deferredPrompt) {
+        e.preventDefault();
+        this.deferredPrompt = e as BeforeInstallPromptEvent;
+        this.notifyInstallCallbacks(true);
+      }
     });
 
     // Listen for the app installed event
