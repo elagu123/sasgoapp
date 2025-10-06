@@ -9,7 +9,13 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [
-      react()
+      react({
+        jsxRuntime: 'automatic',
+        jsxImportSource: 'react',
+        babel: {
+          plugins: mode === 'production' ? [] : []
+        }
+      })
     ],
     define: {
       'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : mode),
